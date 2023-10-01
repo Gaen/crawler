@@ -123,6 +123,23 @@ export function simulateCombat(player: FighterModel, monster: FighterModel): Com
   return log;
 }
 
+export function simulateFlee(player: FighterModel, monster: FighterModel): CombatLog {
+
+  const damage = rollDamage(monster, player);
+
+  player.state.hp -= damage;
+
+  return [{
+    at: 0,
+    type: 'hit' as const,
+    source: Fighter.Monster,
+    target: Fighter.Player,
+    damage,
+    hpBefore: player.state.hp + damage,
+    hpAfter: player.state.hp,
+  }];
+}
+
 function rollInitiative(player: FighterModel, monster: FighterModel): Fighter {
   // TODO учитывать характеристики
   return Math.random() > 0.5 ? Fighter.Player : Fighter.Monster;

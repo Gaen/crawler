@@ -1,6 +1,8 @@
-import {CombatLogEntry, FighterModel, simulateCombat} from './combat';
+import {CombatLogEntry, FighterModel, simulateCombat, simulateFlee} from './combat';
 
 const prompts = require('prompts');
+
+import {rollPerception} from './mechanics';
 
 type PlayerLocation = SurfaceLocation | DungeonLocation;
 
@@ -145,6 +147,17 @@ async function processDungeon(game: Game) {
 
 async function processExplore(game: Game) {
 
+  function formatLogEntry(entry: CombatLogEntry): string {
+    switch (entry.type) {
+      case 'initiative':
+        return `at ${String(entry.at).padStart(3)} ${entry.winner} wins initiative`;
+      case 'hit':
+        return `at ${String(entry.at).padStart(3)} ${entry.source} hits ${entry.target} for ${entry.damage}, hp ${entry.hpBefore} -> ${entry.hpAfter}`;
+      default:
+        throw new Error(`Unsupported log entry type: ${(entry as {type: string}).type}`)
+    }
+  }
+
   const player: FighterModel = {
     def: {
       damage: game.player.damage,
@@ -166,26 +179,63 @@ async function processExplore(game: Game) {
   }
 
   console.log();
-  console.log('You meet a monster, its stats are:');
+  console.log('You see a monster, its stats are:');
   console.log(`hp:       ${monster.state.hp}`);
   console.log(`damage:   ${monster.def.damage.min} - ${monster.def.damage.max}`);
   console.log(`cooldown: ${monster.def.cooldown}`);
   console.log();
 
-  const log = simulateCombat(player, monster);
+  if(rollPerception()) {
 
-  log.forEach(entry => console.log((() => {
-    switch (entry.type) {
-      case 'initiative':
-        return `at ${String(entry.at).padStart(3)} ${entry.winner} wins initiative`;
-      case 'hit':
-        return `at ${String(entry.at).padStart(3)} ${entry.source} hits ${entry.target} for ${entry.damage}, hp ${entry.hpBefore} -> ${entry.hpAfter}`;
-      default:
-        throw new Error(`Unsupported log entry type: ${(entry as {type: string}).type}`)
+    console.log('It didn\'t notice you.');
+    console.log();
+
+    const {value} = await prompts({
+      message: `Monster | hp: ${game.player.hp}`,
+      name: 'value',
+      type: 'select',
+      choices: [
+        {title: 'Fight', description: 'Start a fight', value: 'fight'},
+        {title: 'Retreat', description: 'Retreat safely', value: 'retreat'},
+      ],
+    });
+
+    switch (value) {
+      case 'retreat':
+        console.log('Retreating');
+        return;
+      case 'fight':
+        const log = simulateCombat(player, monster);
+        log.forEach(entry => console.log(formatLogEntry(entry)))
+        break;
     }
-  })()));
 
-  console.log();
+  } else {
+
+    console.log('It noticed you!');
+    console.log();
+
+    const {value} = await prompts({
+      message: `Monster | hp: ${game.player.hp}`,
+      name: 'value',
+      type: 'select',
+      choices: [
+        {title: 'Fight', description: 'Start a fight', value: 'fight'},
+        {title: 'Flee', description: 'Flee and get hit in the back', value: 'flee'},
+      ],
+    });
+
+    switch (value) {
+      case 'flee':
+        const fleeLog = simulateFlee(player, monster);
+        fleeLog.forEach(entry => console.log(formatLogEntry(entry)))
+        break;
+      case 'fight':
+        const log = simulateCombat(player, monster);
+        log.forEach(entry => console.log(formatLogEntry(entry)))
+        break;
+    }
+  }
 
   if(player.state.hp <= 0) {
     console.log('You died and revived at the surface');
@@ -197,7 +247,7 @@ async function processExplore(game: Game) {
   game.player.hp = player.state.hp;
 
   console.log('You survived!');
-  // TODO drop loot, give exp, etc
+  // TODO drop loot, give exp, etc - fight only, not flee
 }
 
 (async () => {
