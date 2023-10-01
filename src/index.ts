@@ -2,9 +2,15 @@ import {CombatLogEntry, FighterModel, simulateCombat} from './combat';
 
 const prompts = require('prompts');
 
-enum PlayerLocation {
-  Surface = 'SURFACE',
-  Dungeon = 'DUNGEON',
+type PlayerLocation = SurfaceLocation | DungeonLocation;
+
+type SurfaceLocation = {
+  type: 'surface',
+}
+
+type DungeonLocation = {
+  type: 'dungeon',
+  level: number,
 }
 
 type Game = {
@@ -20,7 +26,7 @@ type Game = {
 function initGame(): Game {
   return {
     exit: false,
-    location: PlayerLocation.Surface as PlayerLocation,
+    location: {type: 'surface'},
     player: {
       hp: 100,
       damage: {min: 10, max: 20},
@@ -47,15 +53,22 @@ async function processStairs(game: Game) {
 
   switch (value) {
     case 'surface':
-      game.location = PlayerLocation.Surface;
+      game.location = {type: 'surface'};
       break;
     case 'd1':
+      game.location = {type: 'dungeon', level: 1};
+      break;
     case 'd2':
+      game.location = {type: 'dungeon', level: 2};
+      break;
     case 'd3':
+      game.location = {type: 'dungeon', level: 3};
+      break;
     case 'd4':
+      game.location = {type: 'dungeon', level: 4};
+      break;
     case 'd5':
-      // TODO respect dungeon level
-      game.location = PlayerLocation.Dungeon;
+      game.location = {type: 'dungeon', level: 5};
       break;
   }
 }
@@ -87,8 +100,11 @@ async function processSurface(game: Game) {
 
 async function processDungeon(game: Game) {
 
+  if(game.location.type !== 'dungeon')
+    throw new Error('Not in dungeon');
+
   const {value} = await prompts({
-    message: `Dungeon | hp: ${game.player.hp}`,
+    message: `Dungeon ${game.location.level} | hp: ${game.player.hp}`,
     name: 'value',
     type: 'select',
     choices: [
@@ -161,7 +177,7 @@ async function processExplore(game: Game) {
   if(player.state.hp <= 0) {
     console.log('You died and revived at the surface');
     game.player.hp = 100;
-    game.location = PlayerLocation.Surface;
+    game.location = {type: 'surface'};
     return;
   }
 
@@ -180,11 +196,11 @@ async function processExplore(game: Game) {
     if(game.exit)
       break;
 
-    switch (game.location) {
-      case PlayerLocation.Surface:
+    switch (game.location.type) {
+      case 'surface':
         await processSurface(game);
         break;
-      case PlayerLocation.Dungeon:
+      case 'dungeon':
         await processDungeon(game);
         break;
       default:
