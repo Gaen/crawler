@@ -29,6 +29,37 @@ function initGame(): Game {
   };
 }
 
+async function processStairs(game: Game) {
+
+  const {value} = await prompts({
+    message: `Dungeon | hp: ${game.player.hp}`,
+    name: 'value',
+    type: 'select',
+    choices: [
+      {title: 'Surface', value: 'surface'},
+      {title: 'Dungeon level 1', value: 'd1'},
+      {title: 'Dungeon level 2', value: 'd2'},
+      {title: 'Dungeon level 3', value: 'd3'},
+      {title: 'Dungeon level 4', value: 'd4', disabled: true},
+      {title: 'Dungeon level 5', value: 'd5', disabled: true},
+    ],
+  });
+
+  switch (value) {
+    case 'surface':
+      game.location = PlayerLocation.Surface;
+      break;
+    case 'd1':
+    case 'd2':
+    case 'd3':
+    case 'd4':
+    case 'd5':
+      // TODO respect dungeon level
+      game.location = PlayerLocation.Dungeon;
+      break;
+  }
+}
+
 async function processSurface(game: Game) {
 
   const {value} = await prompts({
@@ -36,15 +67,14 @@ async function processSurface(game: Game) {
     name: 'value',
     type: 'select',
     choices: [
-      {title: 'Dungeon', description: 'Go to dungeon', value: 'dungeon'},
+      {title: 'Stairs', description: 'Go to stairs', value: 'stairs'},
       {title: 'Exit', description: 'Exit game', value: 'exit'},
     ],
   });
 
   switch (value) {
-    case 'dungeon':
-      console.log('Descending to dungeon');
-      game.location = PlayerLocation.Dungeon;
+    case 'stairs':
+      await processStairs(game);
       break;
     case 'exit':
       console.log('Exiting');
@@ -63,7 +93,7 @@ async function processDungeon(game: Game) {
     type: 'select',
     choices: [
       {title: 'Explore', description: 'Pick a fight', value: 'explore'},
-      {title: 'Surface', description: 'Go to surface', value: 'surface'},
+      {title: 'Stairs', description: 'Go to stairs', value: 'stairs'},
       {title: 'Exit', description: 'Exit game', value: 'exit'},
     ],
   });
@@ -72,13 +102,13 @@ async function processDungeon(game: Game) {
     case 'explore':
       await processExplore(game);
       break;
-    case 'surface':
-      console.log('Ascending to surface');
-      game.location = PlayerLocation.Surface;
+    case 'stairs':
+      await processStairs(game);
       break;
     case 'exit':
       console.log('exiting');
-      return;
+      game.exit = true;
+      break;
     default:
       throw new Error(`Unsupported choice: ${value}`);
   }
