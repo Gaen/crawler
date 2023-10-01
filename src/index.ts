@@ -35,6 +35,11 @@ function initGame(): Game {
   };
 }
 
+async function showPlayerStats(game: Game) {
+  console.log(`damage:   ${game.player.damage.min} - ${game.player.damage.max}`);
+  console.log(`cooldown: ${game.player.cooldown}`);
+}
+
 async function processStairs(game: Game) {
 
   const {value} = await prompts({
@@ -81,6 +86,7 @@ async function processSurface(game: Game) {
     type: 'select',
     choices: [
       {title: 'Stairs', description: 'Go to stairs', value: 'stairs'},
+      {title: 'Stats', description: 'Show player stats', value: 'stats'},
       {title: 'Exit', description: 'Exit game', value: 'exit'},
     ],
   });
@@ -88,6 +94,9 @@ async function processSurface(game: Game) {
   switch (value) {
     case 'stairs':
       await processStairs(game);
+      break;
+    case 'stats':
+      await showPlayerStats(game);
       break;
     case 'exit':
       console.log('Exiting');
@@ -110,6 +119,7 @@ async function processDungeon(game: Game) {
     choices: [
       {title: 'Explore', description: 'Pick a fight', value: 'explore'},
       {title: 'Stairs', description: 'Go to stairs', value: 'stairs'},
+      {title: 'Stats', description: 'Show player stats', value: 'stats'},
       {title: 'Exit', description: 'Exit game', value: 'exit'},
     ],
   });
@@ -120,6 +130,9 @@ async function processDungeon(game: Game) {
       break;
     case 'stairs':
       await processStairs(game);
+      break;
+    case 'stats':
+      await showPlayerStats(game);
       break;
     case 'exit':
       console.log('exiting');
