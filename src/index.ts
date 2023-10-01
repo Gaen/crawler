@@ -88,6 +88,7 @@ async function processSurface(game: Game) {
     type: 'select',
     choices: [
       {title: 'Stairs', description: 'Go to stairs', value: 'stairs'},
+      {title: 'Well', description: 'Restore hp', value: 'well'},
       {title: 'Stats', description: 'Show player stats', value: 'stats'},
       {title: 'Exit', description: 'Exit game', value: 'exit'},
     ],
@@ -96,6 +97,10 @@ async function processSurface(game: Game) {
   switch (value) {
     case 'stairs':
       await processStairs(game);
+      break;
+    case 'well':
+      game.player.hp = 100; // TODO max hp
+      console.log('You feel refreshed');
       break;
     case 'stats':
       await showPlayerStats(game);
@@ -207,6 +212,7 @@ async function processExplore(game: Game) {
       case 'fight':
         const log = simulateCombat(player, monster);
         log.forEach(entry => console.log(formatLogEntry(entry)))
+        console.log();
         break;
     }
 
@@ -228,18 +234,21 @@ async function processExplore(game: Game) {
     switch (value) {
       case 'flee':
         const fleeLog = simulateFlee(player, monster);
-        fleeLog.forEach(entry => console.log(formatLogEntry(entry)))
+        fleeLog.forEach(entry => console.log(formatLogEntry(entry)));
+        console.log();
         break;
       case 'fight':
         const log = simulateCombat(player, monster);
-        log.forEach(entry => console.log(formatLogEntry(entry)))
+        log.forEach(entry => console.log(formatLogEntry(entry)));
+        console.log();
         break;
     }
   }
 
   if(player.state.hp <= 0) {
-    console.log('You died and revived at the surface');
-    game.player.hp = 100;
+    console.log('You died and revived at the well');
+    console.log();
+    game.player.hp = 100; // TODO max hp
     game.location = {type: 'surface'};
     return;
   }
@@ -247,6 +256,7 @@ async function processExplore(game: Game) {
   game.player.hp = player.state.hp;
 
   console.log('You survived!');
+  console.log();
   // TODO drop loot, give exp, etc - fight only, not flee
 }
 
