@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import {CombatLogEntry, FighterModel, simulateCombat, simulateFlee} from './combat';
 
 const prompts = require('prompts');

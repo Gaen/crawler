@@ -3,6 +3,9 @@
   "version": "0.0.1",
   "private": true,
   "main": "dist/index.js",
+  "bin": {
+    "crawler": "dist/index.js"
+  },
   "scripts": {
     "prepare": "tsc",
     "start": "ts-node src/index.ts"
