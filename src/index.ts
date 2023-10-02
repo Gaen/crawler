@@ -1,34 +1,10 @@
 #!/usr/bin/env node
 
-import {CombatLogEntry, FighterModel, simulateCombat, simulateFlee} from './combat';
-
 const prompts = require('prompts');
 
+import {CombatLogEntry, FighterModel, simulateCombat, simulateFlee} from './combat';
 import {rollPerception} from './mechanics';
-
-type PlayerLocation = SurfaceLocation | DungeonLocation;
-
-type SurfaceLocation = {
-  type: 'surface',
-}
-
-type DungeonLocation = {
-  type: 'dungeon',
-  level: number,
-}
-
-type CharacterModel = {
-  hp: number,
-  maxHp: number,
-  damage: {min: number, max: number},
-  cooldown: number,
-};
-
-type Game = {
-  exit: boolean,
-  location: PlayerLocation,
-  player: CharacterModel,
-}
+import {CharacterModel, GameModel} from './models';
 
 function makeFighterModel(character: CharacterModel): FighterModel {
   return {
@@ -45,7 +21,7 @@ function makeFighterModel(character: CharacterModel): FighterModel {
   }
 }
 
-function initGame(): Game {
+function initGame(): GameModel {
   return {
     exit: false,
     location: {type: 'surface'},
@@ -58,12 +34,12 @@ function initGame(): Game {
   };
 }
 
-async function showPlayerStats(game: Game) {
+async function showPlayerStats(game: GameModel) {
   console.log(`damage:   ${game.player.damage.min} - ${game.player.damage.max}`);
   console.log(`cooldown: ${game.player.cooldown}`);
 }
 
-async function processStairs(game: Game) {
+async function processStairs(game: GameModel) {
 
   const {value} = await prompts({
     message: `Dungeon | hp: ${game.player.hp}`,
@@ -101,7 +77,7 @@ async function processStairs(game: Game) {
   }
 }
 
-async function processSurface(game: Game) {
+async function processSurface(game: GameModel) {
 
   const {value} = await prompts({
     message: `Surface | hp: ${game.player.hp}`,
@@ -135,7 +111,7 @@ async function processSurface(game: Game) {
   }
 }
 
-async function processDungeon(game: Game) {
+async function processDungeon(game: GameModel) {
 
   if(game.location.type !== 'dungeon')
     throw new Error('Not in dungeon');
@@ -171,7 +147,7 @@ async function processDungeon(game: Game) {
   }
 }
 
-async function processExplore(game: Game) {
+async function processExplore(game: GameModel) {
 
   function formatLogEntry(entry: CombatLogEntry): string {
     switch (entry.type) {
