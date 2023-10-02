@@ -17,14 +17,31 @@ type DungeonLocation = {
   level: number,
 }
 
+type CharacterModel = {
+  hp: number,
+  maxHp: number,
+  damage: {min: number, max: number},
+  cooldown: number,
+};
+
 type Game = {
   exit: boolean,
   location: PlayerLocation,
-  player: {
-    hp: number,
-    maxHp: number,
-    damage: {min: number, max: number},
-    cooldown: number,
+  player: CharacterModel,
+}
+
+function makeFighterModel(character: CharacterModel): FighterModel {
+  return {
+    def: {
+      damage: {
+        min: character.damage.min,
+        max: character.damage.max,
+      },
+      cooldown: character.cooldown,
+    },
+    state: {
+      hp: character.hp,
+    }
   }
 }
 
@@ -167,25 +184,15 @@ async function processExplore(game: Game) {
     }
   }
 
-  const player: FighterModel = {
-    def: {
-      damage: game.player.damage,
-      cooldown: game.player.cooldown,
-    },
-    state: {
-      hp: game.player.hp,
-    }
-  }
+  const player = makeFighterModel(game.player);
 
-  const monster: FighterModel = {
-    def: {
-      damage: {min: 10, max: 15},
-      cooldown: 131,
-    },
-    state: {
-      hp: 100,
-    }
-  }
+  // TODO monster factory
+  const monster = makeFighterModel({
+    hp: 100,
+    maxHp: 100,
+    damage: {min: 10, max: 15},
+    cooldown: 131,
+  });
 
   console.log();
   console.log('You see a monster, its stats are:');
