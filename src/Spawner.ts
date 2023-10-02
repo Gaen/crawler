@@ -4,6 +4,10 @@ function random({min, max}: {min: number, max: number}): number {
   return min + Math.round(Math.random() * (max - min));
 }
 
+function scale(value: number, multiplier: number): number {
+  return Math.round(value * multiplier);
+}
+
 export type MonsterSpawnDefinition = {
   hp: {min: number, max: number},
   damage: {
@@ -17,13 +21,13 @@ export default class Spawner {
 
   constructor(private readonly _def: MonsterSpawnDefinition) {}
 
-  public spawn(): CharacterModel {
+  public spawn(difficulty: number): CharacterModel {
 
-    const hp = random(this._def.hp);
-    const cooldown = random(this._def.cooldown);
+    const hp = scale(random(this._def.hp), difficulty);
+    const cooldown = scale(random(this._def.cooldown), difficulty);
     const damage = {
-      min: random(this._def.damage.min),
-      max: random(this._def.damage.max),
+      min: scale(random(this._def.damage.min), difficulty),
+      max: scale(random(this._def.damage.max), difficulty),
     };
 
     return {

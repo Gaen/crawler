@@ -40,7 +40,7 @@ function initGame(): GameModel {
         max: {min: 10, max: 20},
       },
       cooldown: {min: 100, max: 200},
-    })
+    }),
   };
 }
 
@@ -171,7 +171,7 @@ async function processExplore(game: GameModel) {
   }
 
   const player = makeFighterModel(game.player);
-  const monster = makeFighterModel(game.spawner.spawn());
+  const monster = makeFighterModel(game.spawner.spawn(1.0));
 
   console.log();
   console.log('You see a monster, its stats are:');
