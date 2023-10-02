@@ -22,6 +22,7 @@ type Game = {
   location: PlayerLocation,
   player: {
     hp: number,
+    maxHp: number,
     damage: {min: number, max: number},
     cooldown: number,
   }
@@ -33,6 +34,7 @@ function initGame(): Game {
     location: {type: 'surface'},
     player: {
       hp: 100,
+      maxHp: 100,
       damage: {min: 10, max: 20},
       cooldown: 117,
     }
@@ -101,7 +103,7 @@ async function processSurface(game: Game) {
       await processStairs(game);
       break;
     case 'well':
-      game.player.hp = 100; // TODO max hp
+      game.player.hp = game.player.maxHp;
       console.log('You feel refreshed');
       break;
     case 'stats':
@@ -250,7 +252,7 @@ async function processExplore(game: Game) {
   if(player.state.hp <= 0) {
     console.log('You died and revived at the well');
     console.log();
-    game.player.hp = 100; // TODO max hp
+    game.player.hp = game.player.maxHp;
     game.location = {type: 'surface'};
     return;
   }
