@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+import Spawner from './Spawner';
+
 const prompts = require('prompts');
 
 import {CombatLogEntry, FighterModel, simulateCombat, simulateFlee} from './combat';
@@ -30,7 +32,15 @@ function initGame(): GameModel {
       maxHp: 100,
       damage: {min: 10, max: 20},
       cooldown: 117,
-    }
+    },
+    spawner: new Spawner({
+      hp: {min: 50, max: 100},
+      damage: {
+        min: {min: 5, max: 10},
+        max: {min: 10, max: 20},
+      },
+      cooldown: {min: 100, max: 200},
+    })
   };
 }
 
@@ -161,14 +171,7 @@ async function processExplore(game: GameModel) {
   }
 
   const player = makeFighterModel(game.player);
-
-  // TODO monster factory
-  const monster = makeFighterModel({
-    hp: 100,
-    maxHp: 100,
-    damage: {min: 10, max: 15},
-    cooldown: 131,
-  });
+  const monster = makeFighterModel(game.spawner.spawn());
 
   console.log();
   console.log('You see a monster, its stats are:');

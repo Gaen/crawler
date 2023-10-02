@@ -1,7 +1,11 @@
+import Spawner from './Spawner';
+
 export type GameModel = {
   exit: boolean,
   location: PlayerLocation,
   player: CharacterModel,
+  // TODO different spawner for each dungeon level
+  spawner: Spawner,
 }
 
 // region character
