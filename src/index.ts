@@ -170,8 +170,23 @@ async function processExplore(game: GameModel) {
     }
   }
 
+  if(game.location.type !== 'dungeon')
+    throw new Error('Not in dungeon');
+
+  const difficulty = (() => {
+    switch (game.location.level) {
+      case 1: return 1.0;
+      case 2: return 1.2;
+      case 3: return 1.5;
+      case 4: return 2.0;
+      case 5: return 2.5;
+      default:
+        throw new Error(`Unsupported dungeon level: ${game.location.level}`);
+    }
+  })();
+
   const player = makeFighterModel(game.player);
-  const monster = makeFighterModel(game.spawner.spawn(1.0));
+  const monster = makeFighterModel(game.spawner.spawn(difficulty));
 
   console.log();
   console.log('You see a monster, its stats are:');
