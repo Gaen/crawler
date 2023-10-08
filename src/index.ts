@@ -1,9 +1,8 @@
 #!/usr/bin/env node
 
-import Spawner from './Spawner';
 import {CombatLogEntry, Fighter, FighterModel, simulateCombat, simulateFlee} from './combat';
 import {rollPerception} from './mechanics';
-import {CharacterModel, GameModel} from './models';
+import {CharacterModel, DungeonModel, GameModel} from './models';
 import * as ui from './ui';
 
 function makeFighterModel(character: CharacterModel): FighterModel {
@@ -22,6 +21,25 @@ function makeFighterModel(character: CharacterModel): FighterModel {
 }
 
 function initGame(): GameModel {
+
+  const monster = {
+    hp: {min: 50, max: 100},
+    damage: {
+      min: {min: 5, max: 10},
+      max: {min: 10, max: 20},
+    },
+    cooldown: {min: 100, max: 200},
+  };
+
+  const boss = {
+    hp: {min: 50, max: 100},
+    damage: {
+      min: {min: 5, max: 10},
+      max: {min: 10, max: 20},
+    },
+    cooldown: {min: 100, max: 200},
+  };
+
   return {
     exit: false,
     location: {type: 'surface'},
@@ -31,14 +49,13 @@ function initGame(): GameModel {
       damage: {min: 10, max: 20},
       cooldown: 117,
     },
-    spawner: new Spawner({
-      hp: {min: 50, max: 100},
-      damage: {
-        min: {min: 5, max: 10},
-        max: {min: 10, max: 20},
-      },
-      cooldown: {min: 100, max: 200},
-    }),
+    dungeon: new DungeonModel(new Map([
+      [1, {monster, boss, difficulty: 1.0}],
+      [2, {monster, boss, difficulty: 1.2}],
+      [3, {monster, boss, difficulty: 1.5}],
+      [4, {monster, boss, difficulty: 2.0}],
+      [5, {monster, boss, difficulty: 2.5}],
+    ]))
   };
 }
 
@@ -60,18 +77,10 @@ async function processStairs(game: GameModel) {
         title: 'Surface',
         action: () => game.location = {type: 'surface'},
       },
-      {
-        title: 'Dungeon level 1',
-        action: () => game.location = {type: 'dungeon', level: 1},
-      },
-      {
-        title: 'Dungeon level 2',
-        action: () => game.location = {type: 'dungeon', level: 2},
-      },
-      {
-        title: 'Dungeon level 3',
-        action: () => game.location = {type: 'dungeon', level: 3},
-      },
+      ...game.dungeon.levels().map(level => ({
+        title: `Dungeon level ${level}`,
+        action: () => game.location = {type: 'dungeon', level},
+      }))
     ]
   );
 }
@@ -145,19 +154,7 @@ async function processExplore(game: GameModel) {
   if(game.location.type !== 'dungeon')
     throw new Error('Not in dungeon');
 
-  const difficulty = (() => {
-    switch (game.location.level) {
-      case 1: return 1.0;
-      case 2: return 1.2;
-      case 3: return 1.5;
-      case 4: return 2.0;
-      case 5: return 2.5;
-      default:
-        throw new Error(`Unsupported dungeon level: ${game.location.level}`);
-    }
-  })();
-
-  const monster = game.spawner.spawn(difficulty);
+  const monster = game.dungeon.level(game.location.level).spawnMonster();
 
   console.log();
   console.log('You see a monster, its stats are:');
