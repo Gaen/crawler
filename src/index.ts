@@ -142,17 +142,6 @@ async function processDungeon(game: GameModel) {
 
 async function processExplore(game: GameModel) {
 
-  function formatLogEntry(entry: CombatLogEntry): string {
-    switch (entry.type) {
-      case 'initiative':
-        return `at ${String(entry.at).padStart(3)} ${entry.winner} wins initiative`;
-      case 'hit':
-        return `at ${String(entry.at).padStart(3)} ${entry.source} hits ${entry.target} for ${entry.damage}, hp ${entry.hpBefore} -> ${entry.hpAfter}`;
-      default:
-        throw new Error(`Unsupported log entry type: ${(entry as {type: string}).type}`)
-    }
-  }
-
   if(game.location.type !== 'dungeon')
     throw new Error('Not in dungeon');
 
@@ -178,68 +167,77 @@ async function processExplore(game: GameModel) {
   console.log(`cooldown: ${monster.def.cooldown}`);
   console.log();
 
-  if(rollPerception()) {
+  if(rollPerception())
+    await processEncounterUnnoticed(game, player, monster);
+  else
+    await processEncounterNoticed(game, player, monster);
+}
 
-    console.log('It didn\'t notice you.');
-    console.log();
+async function processEncounterNoticed(game: GameModel, player: FighterModel, monster: FighterModel) {
 
-    await ui.select(
-      `Monster | hp: ${game.player.hp}`,
-      [
-        {
-          title: 'Fight',
-          description: 'Start a fight',
-          action: async () => {
-            const log = simulateCombat(player, monster);
-            log.forEach(entry => console.log(formatLogEntry(entry)))
-            console.log();
-          },
-        },
-        {
-          title: 'Retreat',
-          description: 'Retreat safely',
-          action: async () => {
-            console.log('Retreating');
-          },
-        },
-      ],
-    );
+  console.log('It noticed you!');
+  console.log();
 
-  } else {
+  await ui.select(
+    `Monster | hp: ${game.player.hp}`,
+    [
+      {
+        title: 'Fight',
+        description: 'Start a fight',
+        action: async () => await processFight(game, player, monster),
+      },
+      {
+        title: 'Flee',
+        description: 'Flee and get hit in the back',
+        action: async () => await processFlee(game, player, monster),
+      },
+    ],
+  );
+}
 
-    console.log('It noticed you!');
-    console.log();
+async function processEncounterUnnoticed(game: GameModel, player: FighterModel, monster: FighterModel) {
 
-    await ui.select(
-      `Monster | hp: ${game.player.hp}`,
-      [
-        {
-          title: 'Fight',
-          description: 'Start a fight',
-          action: async () => {
-            const log = simulateCombat(player, monster);
-            log.forEach(entry => console.log(formatLogEntry(entry)))
-            console.log();
-          },
-        },
-        {
-          title: 'Flee',
-          description: 'Flee and get hit in the back',
-          action: async () => {
-            const fleeLog = simulateFlee(player, monster);
-            fleeLog.forEach(entry => console.log(formatLogEntry(entry)));
-            console.log();
-          },
-        },
-      ],
-    );
+  console.log('It didn\'t notice you.');
+  console.log();
+
+  await ui.select(
+    `Monster | hp: ${game.player.hp}`,
+    [
+      {
+        title: 'Fight',
+        description: 'Start a fight',
+        action: async () => await processFight(game, player, monster),
+      },
+      {
+        title: 'Retreat',
+        description: 'Retreat safely',
+        action: async () => await processRetreat(game),
+      },
+    ],
+  );
+}
+
+async function processFight(game: GameModel, player: FighterModel, monster: FighterModel) {
+
+  function formatLogEntry(entry: CombatLogEntry): string {
+    switch (entry.type) {
+      case 'initiative':
+        return `at ${String(entry.at).padStart(3)} ${entry.winner} wins initiative`;
+      case 'hit':
+        return `at ${String(entry.at).padStart(3)} ${entry.source} hits ${entry.target} for ${entry.damage}, hp ${entry.hpBefore} -> ${entry.hpAfter}`;
+      default:
+        throw new Error(`Unsupported log entry type: ${(entry as {type: string}).type}`)
+    }
   }
 
+  const log = simulateCombat(player, monster);
+
+  console.log();
+  log.forEach(entry => console.log(formatLogEntry(entry)))
+  console.log();
+
   if(player.state.hp <= 0) {
-    console.log('You died and revived at the well');
-    console.log();
-    game.player.hp = game.player.maxHp;
-    game.location = {type: 'surface'};
+    await processDeath(game);
     return;
   }
 
@@ -247,7 +245,49 @@ async function processExplore(game: GameModel) {
 
   console.log('You survived!');
   console.log();
-  // TODO drop loot, give exp, etc - fight only, not flee
+
+  // TODO drop loot, give exp, etc
+}
+
+async function processFlee(game: GameModel, player: FighterModel, monster: FighterModel) {
+
+  function formatLogEntry(entry: CombatLogEntry): string {
+    switch (entry.type) {
+      case 'initiative':
+        return `at ${String(entry.at).padStart(3)} ${entry.winner} wins initiative`;
+      case 'hit':
+        return `at ${String(entry.at).padStart(3)} ${entry.source} hits ${entry.target} for ${entry.damage}, hp ${entry.hpBefore} -> ${entry.hpAfter}`;
+      default:
+        throw new Error(`Unsupported log entry type: ${(entry as {type: string}).type}`)
+    }
+  }
+
+  const log = simulateFlee(player, monster);
+
+  console.log();
+  log.forEach(entry => console.log(formatLogEntry(entry)));
+  console.log();
+
+  if(player.state.hp <= 0) {
+    await processDeath(game);
+    return;
+  }
+
+  game.player.hp = player.state.hp;
+
+  console.log('You survived!');
+  console.log();
+}
+
+async function processRetreat(game: GameModel) {
+  console.log('Retreating');
+}
+
+async function processDeath(game: GameModel) {
+  console.log('You died and revived at the well');
+  console.log();
+  game.player.hp = game.player.maxHp;
+  game.location = {type: 'surface'};
 }
 
 (async () => {
