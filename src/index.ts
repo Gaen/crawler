@@ -157,23 +157,22 @@ async function processExplore(game: GameModel) {
     }
   })();
 
-  const player = makeFighterModel(game.player);
-  const monster = makeFighterModel(game.spawner.spawn(difficulty));
+  const monster = game.spawner.spawn(difficulty);
 
   console.log();
   console.log('You see a monster, its stats are:');
-  console.log(`hp:       ${monster.state.hp}`);
-  console.log(`damage:   ${monster.def.damage.min} - ${monster.def.damage.max}`);
-  console.log(`cooldown: ${monster.def.cooldown}`);
+  console.log(`hp:       ${monster.hp}`);
+  console.log(`damage:   ${monster.damage.min} - ${monster.damage.max}`);
+  console.log(`cooldown: ${monster.cooldown}`);
   console.log();
 
   if(rollPerception())
-    await processEncounterUnnoticed(game, player, monster);
+    await processEncounterUnnoticed(game, monster);
   else
-    await processEncounterNoticed(game, player, monster);
+    await processEncounterNoticed(game, monster);
 }
 
-async function processEncounterNoticed(game: GameModel, player: FighterModel, monster: FighterModel) {
+async function processEncounterNoticed(game: GameModel, monster: CharacterModel) {
 
   console.log('It noticed you!');
   console.log();
@@ -184,18 +183,18 @@ async function processEncounterNoticed(game: GameModel, player: FighterModel, mo
       {
         title: 'Fight',
         description: 'Start a fight',
-        action: async () => await processFight(game, player, monster),
+        action: async () => await processFight(game, monster),
       },
       {
         title: 'Flee',
         description: 'Flee and get hit in the back',
-        action: async () => await processFlee(game, player, monster),
+        action: async () => await processFlee(game, monster),
       },
     ],
   );
 }
 
-async function processEncounterUnnoticed(game: GameModel, player: FighterModel, monster: FighterModel) {
+async function processEncounterUnnoticed(game: GameModel, monster: CharacterModel) {
 
   console.log('It didn\'t notice you.');
   console.log();
@@ -206,7 +205,7 @@ async function processEncounterUnnoticed(game: GameModel, player: FighterModel, 
       {
         title: 'Fight',
         description: 'Start a fight',
-        action: async () => await processFight(game, player, monster),
+        action: async () => await processFight(game, monster),
       },
       {
         title: 'Retreat',
@@ -217,7 +216,7 @@ async function processEncounterUnnoticed(game: GameModel, player: FighterModel, 
   );
 }
 
-async function processFight(game: GameModel, player: FighterModel, monster: FighterModel) {
+async function processFight(game: GameModel, monster: CharacterModel) {
 
   function formatLogEntry(entry: CombatLogEntry): string {
     switch (entry.type) {
@@ -230,18 +229,21 @@ async function processFight(game: GameModel, player: FighterModel, monster: Figh
     }
   }
 
-  const log = simulateCombat(player, monster);
+  const playerFighter = makeFighterModel(game.player);
+  const monsterFighter = makeFighterModel(monster);
+
+  const log = simulateCombat(playerFighter, monsterFighter);
 
   console.log();
   log.forEach(entry => console.log(formatLogEntry(entry)))
   console.log();
 
-  if(player.state.hp <= 0) {
+  if(playerFighter.state.hp <= 0) {
     await processDeath(game);
     return;
   }
 
-  game.player.hp = player.state.hp;
+  game.player.hp = playerFighter.state.hp;
 
   console.log('You survived!');
   console.log();
@@ -249,7 +251,7 @@ async function processFight(game: GameModel, player: FighterModel, monster: Figh
   // TODO drop loot, give exp, etc
 }
 
-async function processFlee(game: GameModel, player: FighterModel, monster: FighterModel) {
+async function processFlee(game: GameModel, monster: CharacterModel) {
 
   function formatLogEntry(entry: CombatLogEntry): string {
     switch (entry.type) {
@@ -262,18 +264,21 @@ async function processFlee(game: GameModel, player: FighterModel, monster: Fight
     }
   }
 
-  const log = simulateFlee(player, monster);
+  const playerFighter = makeFighterModel(game.player);
+  const monsterFighter = makeFighterModel(monster);
+
+  const log = simulateFlee(playerFighter, monsterFighter);
 
   console.log();
   log.forEach(entry => console.log(formatLogEntry(entry)));
   console.log();
 
-  if(player.state.hp <= 0) {
+  if(playerFighter.state.hp <= 0) {
     await processDeath(game);
     return;
   }
 
-  game.player.hp = player.state.hp;
+  game.player.hp = playerFighter.state.hp;
 
   console.log('You survived!');
   console.log();
