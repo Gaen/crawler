@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import Spawner from './Spawner';
-import {CombatLogEntry, FighterModel, simulateCombat, simulateFlee} from './combat';
+import {CombatLogEntry, Fighter, FighterModel, simulateCombat, simulateFlee} from './combat';
 import {rollPerception} from './mechanics';
 import {CharacterModel, GameModel} from './models';
 import * as ui from './ui';
@@ -183,7 +183,7 @@ async function processEncounterNoticed(game: GameModel, monster: CharacterModel)
       {
         title: 'Fight',
         description: 'Start a fight',
-        action: async () => await processFight(game, monster),
+        action: async () => await processFight(game, monster, false),
       },
       {
         title: 'Flee',
@@ -205,7 +205,7 @@ async function processEncounterUnnoticed(game: GameModel, monster: CharacterMode
       {
         title: 'Fight',
         description: 'Start a fight',
-        action: async () => await processFight(game, monster),
+        action: async () => await processFight(game, monster, true),
       },
       {
         title: 'Retreat',
@@ -216,12 +216,10 @@ async function processEncounterUnnoticed(game: GameModel, monster: CharacterMode
   );
 }
 
-async function processFight(game: GameModel, monster: CharacterModel) {
+async function processFight(game: GameModel, monster: CharacterModel, playerInitiative: boolean) {
 
   function formatLogEntry(entry: CombatLogEntry): string {
     switch (entry.type) {
-      case 'initiative':
-        return `at ${String(entry.at).padStart(3)} ${entry.winner} wins initiative`;
       case 'hit':
         return `at ${String(entry.at).padStart(3)} ${entry.source} hits ${entry.target} for ${entry.damage}, hp ${entry.hpBefore} -> ${entry.hpAfter}`;
       default:
@@ -232,10 +230,19 @@ async function processFight(game: GameModel, monster: CharacterModel) {
   const playerFighter = makeFighterModel(game.player);
   const monsterFighter = makeFighterModel(monster);
 
-  const log = simulateCombat(playerFighter, monsterFighter);
+  const log = simulateCombat(playerFighter, monsterFighter, playerInitiative ? Fighter.Player : Fighter.Monster);
 
   console.log();
+
+  if(playerInitiative)
+    console.log('You strike first!');
+  else
+    console.log('Monster strikes first!');
+
+  console.log();
+
   log.forEach(entry => console.log(formatLogEntry(entry)))
+
   console.log();
 
   if(playerFighter.state.hp <= 0) {
@@ -255,8 +262,6 @@ async function processFlee(game: GameModel, monster: CharacterModel) {
 
   function formatLogEntry(entry: CombatLogEntry): string {
     switch (entry.type) {
-      case 'initiative':
-        return `at ${String(entry.at).padStart(3)} ${entry.winner} wins initiative`;
       case 'hit':
         return `at ${String(entry.at).padStart(3)} ${entry.source} hits ${entry.target} for ${entry.damage}, hp ${entry.hpBefore} -> ${entry.hpAfter}`;
       default:

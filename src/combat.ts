@@ -24,12 +24,7 @@ export type FighterState = {
 
 export type CombatLog = CombatLogEntry[];
 
-export type CombatLogEntry = {at: number} & (InitiativeEntry | HitEntry);
-
-type InitiativeEntry = {
-  type: 'initiative',
-  winner: Fighter,
-}
+export type CombatLogEntry = {at: number} & (HitEntry);
 
 type HitEntry = {
   type: 'hit',
@@ -42,7 +37,7 @@ type HitEntry = {
 
 // endregion
 
-export function simulateCombat(player: FighterModel, monster: FighterModel): CombatLog {
+export function simulateCombat(player: FighterModel, monster: FighterModel, initiator: Fighter): CombatLog {
 
   let now = 0;
   let playerReadyAt;
@@ -50,9 +45,7 @@ export function simulateCombat(player: FighterModel, monster: FighterModel): Com
 
   const log = [];
 
-  const initiativeWinner = rollInitiative(player, monster);
-
-  switch (initiativeWinner) {
+  switch (initiator) {
     case Fighter.Player:
       playerReadyAt = 0;
       monsterReadyAt = monster.def.cooldown;
@@ -62,14 +55,8 @@ export function simulateCombat(player: FighterModel, monster: FighterModel): Com
       playerReadyAt = player.def.cooldown;
       break;
     default:
-      throw new Error(`Impossible initiative winner: ${initiativeWinner}`);
+      throw new Error(`Impossible initiator: ${initiator}`);
   }
-
-  log.push({
-    at: now,
-    type: 'initiative' as const,
-    winner: initiativeWinner,
-  });
 
   let safety = 1000;
 
@@ -138,11 +125,6 @@ export function simulateFlee(player: FighterModel, monster: FighterModel): Comba
     hpBefore: player.state.hp + damage,
     hpAfter: player.state.hp,
   }];
-}
-
-function rollInitiative(player: FighterModel, monster: FighterModel): Fighter {
-  // TODO учитывать характеристики
-  return Math.random() > 0.5 ? Fighter.Player : Fighter.Monster;
 }
 
 function rollDamage(source: FighterModel, target: FighterModel): number {
