@@ -2,7 +2,7 @@
 
 import {CombatLogEntry, Fighter, FighterModel, simulateCombat, simulateFlee} from './combat';
 import {rollPerception} from './mechanics';
-import {CharacterModel, DungeonModel, GameModel} from './models';
+import {CharacterModel, DungeonModel, GameModel, PlayerLocation} from './models';
 import * as ui from './ui';
 
 function makeFighterModel(character: CharacterModel): FighterModel {
@@ -70,8 +70,20 @@ async function processPlayerStats(game: GameModel) {
 }
 
 async function processStairs(game: GameModel) {
+
+  function formatLocation(location: PlayerLocation): string {
+    switch (location.type) {
+      case 'surface':
+        return 'Surface';
+      case 'dungeon':
+        return `Dungeon ${location.level}`;
+      default:
+        throw new Error(`Unsupported location type: ${(location as { type: string }).type}`);
+    }
+  }
+
   await ui.select(
-    `Dungeon | hp: ${game.player.hp}`,
+    `${formatLocation(game.location)} | hp: ${game.player.hp}`,
     [
       {
         title: 'Surface',
