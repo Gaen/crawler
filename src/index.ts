@@ -218,15 +218,6 @@ async function processEncounterUnnoticed(game: GameModel, monster: CharacterMode
 
 async function processFight(game: GameModel, monster: CharacterModel, playerInitiative: boolean) {
 
-  function formatLogEntry(entry: CombatLogEntry): string {
-    switch (entry.type) {
-      case 'hit':
-        return `at ${String(entry.at).padStart(3)} ${entry.source} hits ${entry.target} for ${entry.damage}, hp ${entry.hpBefore} -> ${entry.hpAfter}`;
-      default:
-        throw new Error(`Unsupported log entry type: ${(entry as {type: string}).type}`)
-    }
-  }
-
   const playerFighter = makeFighterModel(game.player);
   const monsterFighter = makeFighterModel(monster);
 
@@ -260,15 +251,6 @@ async function processFight(game: GameModel, monster: CharacterModel, playerInit
 
 async function processFlee(game: GameModel, monster: CharacterModel) {
 
-  function formatLogEntry(entry: CombatLogEntry): string {
-    switch (entry.type) {
-      case 'hit':
-        return `at ${String(entry.at).padStart(3)} ${entry.source} hits ${entry.target} for ${entry.damage}, hp ${entry.hpBefore} -> ${entry.hpAfter}`;
-      default:
-        throw new Error(`Unsupported log entry type: ${(entry as {type: string}).type}`)
-    }
-  }
-
   const playerFighter = makeFighterModel(game.player);
   const monsterFighter = makeFighterModel(monster);
 
@@ -298,6 +280,19 @@ async function processDeath(game: GameModel) {
   console.log();
   game.player.hp = game.player.maxHp;
   game.location = {type: 'surface'};
+}
+
+function formatLogEntry(entry: CombatLogEntry): string {
+  switch (entry.type) {
+    case 'hit':
+      if(entry.source === Fighter.Player && entry.target === Fighter.Monster)
+        return `${String(entry.at).padStart(3)}: You hit monster for ${entry.damage}, hp ${entry.hpBefore} -> ${entry.hpAfter}`;
+      if(entry.source === Fighter.Monster && entry.target === Fighter.Player)
+        return `${String(entry.at).padStart(3)}: Monster hits you for ${entry.damage}, hp ${entry.hpBefore} -> ${entry.hpAfter}`;
+      throw new Error(`Invalid source and target for hit entry`);
+    default:
+      throw new Error(`Unsupported log entry type: ${(entry as {type: string}).type}`)
+  }
 }
 
 (async () => {
