@@ -1,12 +1,10 @@
 #!/usr/bin/env node
 
 import Spawner from './Spawner';
-
-const prompts = require('prompts');
-
 import {CombatLogEntry, FighterModel, simulateCombat, simulateFlee} from './combat';
 import {rollPerception} from './mechanics';
 import {CharacterModel, GameModel} from './models';
+import * as ui from './ui';
 
 function makeFighterModel(character: CharacterModel): FighterModel {
   return {
@@ -44,81 +42,70 @@ function initGame(): GameModel {
   };
 }
 
-async function showPlayerStats(game: GameModel) {
+async function processExit(game: GameModel) {
+  console.log('Exiting');
+  game.exit = true;
+}
+
+async function processPlayerStats(game: GameModel) {
   console.log(`damage:   ${game.player.damage.min} - ${game.player.damage.max}`);
   console.log(`cooldown: ${game.player.cooldown}`);
 }
 
 async function processStairs(game: GameModel) {
-
-  const {value} = await prompts({
-    message: `Dungeon | hp: ${game.player.hp}`,
-    name: 'value',
-    type: 'select',
-    choices: [
-      {title: 'Surface', value: 'surface'},
-      {title: 'Dungeon level 1', value: 'd1'},
-      {title: 'Dungeon level 2', value: 'd2'},
-      {title: 'Dungeon level 3', value: 'd3'},
-      {title: 'Dungeon level 4', value: 'd4', disabled: true},
-      {title: 'Dungeon level 5', value: 'd5', disabled: true},
-    ],
-  });
-
-  switch (value) {
-    case 'surface':
-      game.location = {type: 'surface'};
-      break;
-    case 'd1':
-      game.location = {type: 'dungeon', level: 1};
-      break;
-    case 'd2':
-      game.location = {type: 'dungeon', level: 2};
-      break;
-    case 'd3':
-      game.location = {type: 'dungeon', level: 3};
-      break;
-    case 'd4':
-      game.location = {type: 'dungeon', level: 4};
-      break;
-    case 'd5':
-      game.location = {type: 'dungeon', level: 5};
-      break;
-  }
+  await ui.select(
+    `Dungeon | hp: ${game.player.hp}`,
+    [
+      {
+        title: 'Surface',
+        action: () => game.location = {type: 'surface'},
+      },
+      {
+        title: 'Dungeon level 1',
+        action: () => game.location = {type: 'dungeon', level: 1},
+      },
+      {
+        title: 'Dungeon level 2',
+        action: () => game.location = {type: 'dungeon', level: 2},
+      },
+      {
+        title: 'Dungeon level 3',
+        action: () => game.location = {type: 'dungeon', level: 3},
+      },
+    ]
+  );
 }
 
 async function processSurface(game: GameModel) {
 
-  const {value} = await prompts({
-    message: `Surface | hp: ${game.player.hp}`,
-    name: 'value',
-    type: 'select',
-    choices: [
-      {title: 'Stairs', description: 'Go to stairs', value: 'stairs'},
-      {title: 'Well', description: 'Restore hp', value: 'well'},
-      {title: 'Stats', description: 'Show player stats', value: 'stats'},
-      {title: 'Exit', description: 'Exit game', value: 'exit'},
+  await ui.select(
+    `Surface | hp: ${game.player.hp}`,
+    [
+      {
+        title: 'Stairs',
+        description: 'Go to stairs',
+        action: async () => await processStairs(game),
+      },
+      {
+        title: 'Well',
+        description: 'Restore hp',
+        action: async () => {
+          game.player.hp = game.player.maxHp;
+          console.log('You feel refreshed');
+        },
+      },
+      {
+        title: 'Stats',
+        description: 'Show player stats',
+        action: async () => await processPlayerStats(game),
+      },
+      {
+        title: 'Exit',
+        description: 'Exit game',
+        action: async () => await processExit(game),
+      },
     ],
-  });
-
-  switch (value) {
-    case 'stairs':
-      await processStairs(game);
-      break;
-    case 'well':
-      game.player.hp = game.player.maxHp;
-      console.log('You feel refreshed');
-      break;
-    case 'stats':
-      await showPlayerStats(game);
-      break;
-    case 'exit':
-      console.log('Exiting');
-      game.exit = true;
-      break;
-    default:
-      throw new Error(`Unsupported choice: ${value}`);
-  }
+  );
 }
 
 async function processDungeon(game: GameModel) {
@@ -126,35 +113,31 @@ async function processDungeon(game: GameModel) {
   if(game.location.type !== 'dungeon')
     throw new Error('Not in dungeon');
 
-  const {value} = await prompts({
-    message: `Dungeon ${game.location.level} | hp: ${game.player.hp}`,
-    name: 'value',
-    type: 'select',
-    choices: [
-      {title: 'Explore', description: 'Pick a fight', value: 'explore'},
-      {title: 'Stairs', description: 'Go to stairs', value: 'stairs'},
-      {title: 'Stats', description: 'Show player stats', value: 'stats'},
-      {title: 'Exit', description: 'Exit game', value: 'exit'},
+  await ui.select(
+    `Dungeon ${game.location.level} | hp: ${game.player.hp}`,
+    [
+      {
+        title: 'Explore',
+        description: 'Pick a fight',
+        action: async () => await processExplore(game),
+      },
+      {
+        title: 'Stairs',
+        description: 'Go to stairs',
+        action: async () => await processStairs(game),
+      },
+      {
+        title: 'Stats',
+        description: 'Show player stats',
+        action: async () => await processPlayerStats(game),
+      },
+      {
+        title: 'Exit',
+        description: 'Exit game',
+        action: async () => await processExit(game),
+      },
     ],
-  });
-
-  switch (value) {
-    case 'explore':
-      await processExplore(game);
-      break;
-    case 'stairs':
-      await processStairs(game);
-      break;
-    case 'stats':
-      await showPlayerStats(game);
-      break;
-    case 'exit':
-      console.log('exiting');
-      game.exit = true;
-      break;
-    default:
-      throw new Error(`Unsupported choice: ${value}`);
-  }
+  );
 }
 
 async function processExplore(game: GameModel) {
@@ -200,54 +183,56 @@ async function processExplore(game: GameModel) {
     console.log('It didn\'t notice you.');
     console.log();
 
-    const {value} = await prompts({
-      message: `Monster | hp: ${game.player.hp}`,
-      name: 'value',
-      type: 'select',
-      choices: [
-        {title: 'Fight', description: 'Start a fight', value: 'fight'},
-        {title: 'Retreat', description: 'Retreat safely', value: 'retreat'},
+    await ui.select(
+      `Monster | hp: ${game.player.hp}`,
+      [
+        {
+          title: 'Fight',
+          description: 'Start a fight',
+          action: async () => {
+            const log = simulateCombat(player, monster);
+            log.forEach(entry => console.log(formatLogEntry(entry)))
+            console.log();
+          },
+        },
+        {
+          title: 'Retreat',
+          description: 'Retreat safely',
+          action: async () => {
+            console.log('Retreating');
+          },
+        },
       ],
-    });
-
-    switch (value) {
-      case 'retreat':
-        console.log('Retreating');
-        return;
-      case 'fight':
-        const log = simulateCombat(player, monster);
-        log.forEach(entry => console.log(formatLogEntry(entry)))
-        console.log();
-        break;
-    }
+    );
 
   } else {
 
     console.log('It noticed you!');
     console.log();
 
-    const {value} = await prompts({
-      message: `Monster | hp: ${game.player.hp}`,
-      name: 'value',
-      type: 'select',
-      choices: [
-        {title: 'Fight', description: 'Start a fight', value: 'fight'},
-        {title: 'Flee', description: 'Flee and get hit in the back', value: 'flee'},
+    await ui.select(
+      `Monster | hp: ${game.player.hp}`,
+      [
+        {
+          title: 'Fight',
+          description: 'Start a fight',
+          action: async () => {
+            const log = simulateCombat(player, monster);
+            log.forEach(entry => console.log(formatLogEntry(entry)))
+            console.log();
+          },
+        },
+        {
+          title: 'Flee',
+          description: 'Flee and get hit in the back',
+          action: async () => {
+            const fleeLog = simulateFlee(player, monster);
+            fleeLog.forEach(entry => console.log(formatLogEntry(entry)));
+            console.log();
+          },
+        },
       ],
-    });
-
-    switch (value) {
-      case 'flee':
-        const fleeLog = simulateFlee(player, monster);
-        fleeLog.forEach(entry => console.log(formatLogEntry(entry)));
-        console.log();
-        break;
-      case 'fight':
-        const log = simulateCombat(player, monster);
-        log.forEach(entry => console.log(formatLogEntry(entry)));
-        console.log();
-        break;
-    }
+    );
   }
 
   if(player.state.hp <= 0) {
