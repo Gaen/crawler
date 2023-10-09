@@ -14,6 +14,9 @@ import {
 import * as ui from './ui';
 import {capitalizeFirst} from './utils';
 
+import playerDef from './defs/player';
+import dungeonDef from './defs/dungeon';
+
 function makeFighterModel(character: ICharacter): FighterModel {
   return {
     def: {
@@ -31,133 +34,11 @@ function makeFighterModel(character: ICharacter): FighterModel {
 
 function initGame(): GameModel {
 
-  const player = {
-    hp: 100,
-    damage: {
-      min: 10,
-      max: 20
-    },
-    cooldown: 117,
-  };
-
-  const rat = {
-    visual: {
-      nameShort: 'rat',
-      nameIndefinite: 'a rat',
-      nameDefinite: 'the rat',
-    },
-    hp: 50,
-    damage: {
-      min: 5,
-      max: 15,
-    },
-    cooldown: 121,
-  };
-
-  const slime = {
-    visual: {
-      nameShort: 'slime',
-      nameIndefinite: 'a slime',
-      nameDefinite: 'the slime',
-    },
-    hp: 50,
-    damage: {
-      min: 5,
-      max: 15,
-    },
-    cooldown: 121,
-  };
-
-  const spider = {
-    visual: {
-      nameShort: 'spider',
-      nameIndefinite: 'a spider',
-      nameDefinite: 'the spider',
-    },
-    hp: 50,
-    damage: {
-      min: 5,
-      max: 15,
-    },
-    cooldown: 121,
-  };
-
-  const ogre = {
-    visual: {
-      nameShort: 'ogre',
-      nameIndefinite: 'an ogre',
-      nameDefinite: 'the ogre',
-    },
-    hp: 150,
-    damage: {
-      min: 15,
-      max: 20,
-    },
-    cooldown: 137,
-  };
-
-  // sample spawn def
-  const monsters = [
-    {
-      def: rat,
-      weight: 1
-    },
-    {
-      def: slime,
-      weight: 1
-    },
-    {
-      def: spider,
-      weight: 1
-    },
-  ];
-
   return {
     exit: false,
     location: {type: 'surface'},
-    player: new PlayerModel(player),
-    dungeon: new DungeonModel(new Map([
-      [
-        1,
-        {
-          monsters,
-          boss: ogre,
-          difficulty: 1.0,
-        }
-      ],
-      [
-        2,
-        {
-          monsters,
-          boss: ogre,
-          difficulty: 1.2,
-        }
-      ],
-      [
-        3,
-        {
-          monsters,
-          boss: ogre,
-          difficulty: 1.5,
-        }
-      ],
-      [
-        4,
-        {
-          monsters,
-          boss: ogre,
-          difficulty: 2.0,
-        }
-      ],
-      [
-        5,
-        {
-          monsters,
-          boss: ogre,
-          difficulty: 2.5,
-        }
-      ],
-    ]))
+    player: new PlayerModel(playerDef),
+    dungeon: new DungeonModel(dungeonDef),
   };
 }
 
