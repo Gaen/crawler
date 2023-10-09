@@ -66,7 +66,14 @@ export class PlayerModel implements ICharacter {
 
 // region monster
 
+export interface MonsterVisualDefinition {
+  nameShort: string,
+  nameIndefinite: string,
+  nameDefinite: string,
+}
+
 export interface MonsterDefinition {
+  visual: MonsterVisualDefinition,
   hp: number,
   damage: {
     min: number,
@@ -75,12 +82,27 @@ export interface MonsterDefinition {
   cooldown: number,
 }
 
+export class MonsterVisualModel {
+
+  constructor(private readonly _def: MonsterVisualDefinition) {}
+
+  get nameShort() { return this._def.nameShort }
+  get nameIndefinite() { return this._def.nameIndefinite }
+  get nameDefinite() { return this._def.nameDefinite }
+}
+
 export class MonsterModel implements ICharacter {
 
-  constructor(
-    private readonly _def: MonsterDefinition,
-    private readonly _multiplier = 1
-  ) {}
+  public readonly visual: MonsterVisualModel;
+
+  private readonly _def: MonsterDefinition;
+  private readonly _multiplier: number;
+
+  constructor(def: MonsterDefinition, multiplier: number = 1) {
+    this._def = def;
+    this._multiplier = multiplier;
+    this.visual = new MonsterVisualModel(def.visual);
+  }
 
   public get hpMax() { return scale(this._def.hp, this._multiplier) }
   public get hpCurrent() { return scale(this._def.hp, this._multiplier) };

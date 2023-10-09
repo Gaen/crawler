@@ -2,8 +2,17 @@
 
 import {CombatLogEntry, Fighter, FighterModel, simulateCombat, simulateFlee} from './combat';
 import {rollPerception} from './mechanics';
-import {ICharacter, DungeonModel, GameModel, PlayerLocation, PlayerModel, MonsterModel} from './models';
+import {
+  ICharacter,
+  DungeonModel,
+  GameModel,
+  PlayerLocation,
+  PlayerModel,
+  MonsterModel,
+  MonsterVisualModel,
+} from './models';
 import * as ui from './ui';
+import {capitalizeFirst} from './utils';
 
 function makeFighterModel(character: ICharacter): FighterModel {
   return {
@@ -32,6 +41,11 @@ function initGame(): GameModel {
   };
 
   const monster = {
+    visual: {
+      nameShort: 'rat',
+      nameIndefinite: 'a rat',
+      nameDefinite: 'the rat',
+    },
     hp: 50,
     damage: {
       min: 5,
@@ -41,6 +55,11 @@ function initGame(): GameModel {
   };
 
   const boss = {
+    visual: {
+      nameShort: 'ogre',
+      nameIndefinite: 'an ogre',
+      nameDefinite: 'the ogre',
+    },
     hp: 150,
     damage: {
       min: 15,
@@ -173,10 +192,10 @@ async function processExplore(game: GameModel) {
   const monster = game.dungeon.level(game.location.level).spawnMonster();
 
   console.log();
-  console.log('You see a monster, its stats are:');
-  console.log(`hp:       ${monster.hpCurrent}`);
-  console.log(`damage:   ${monster.damageMin} - ${monster.damageMax}`);
-  console.log(`cooldown: ${monster.cooldown}`);
+  console.log(`You see ${monster.visual.nameIndefinite}.`);
+  console.log(`Hp:       ${monster.hpCurrent}`);
+  console.log(`Damage:   ${monster.damageMin} - ${monster.damageMax}`);
+  console.log(`Cooldown: ${monster.cooldown}`);
   console.log();
 
   if(rollPerception())
@@ -191,7 +210,7 @@ async function processEncounterNoticed(game: GameModel, monster: MonsterModel) {
   console.log();
 
   await ui.select(
-    `Monster | hp: ${game.player.hpCurrent}`,
+    `${capitalizeFirst(monster.visual.nameShort)} | hp: ${game.player.hpCurrent}`,
     [
       {
         title: 'Fight',
@@ -213,7 +232,7 @@ async function processEncounterUnnoticed(game: GameModel, monster: MonsterModel)
   console.log();
 
   await ui.select(
-    `Monster | hp: ${game.player.hpCurrent}`,
+    `${capitalizeFirst(monster.visual.nameShort)} | hp: ${game.player.hpCurrent}`,
     [
       {
         title: 'Fight',
@@ -241,11 +260,11 @@ async function processFight(game: GameModel, monster: MonsterModel, playerInitia
   if(playerInitiative)
     console.log('You strike first!');
   else
-    console.log('Monster strikes first!');
+    console.log(`${capitalizeFirst(monster.visual.nameDefinite)} strikes first!`);
 
   console.log();
 
-  log.forEach(entry => console.log(formatLogEntry(entry)))
+  log.forEach(entry => console.log(formatLogEntry(entry, monster.visual)))
 
   console.log();
 
@@ -270,7 +289,7 @@ async function processFlee(game: GameModel, monster: MonsterModel) {
   const log = simulateFlee(playerFighter, monsterFighter);
 
   console.log();
-  log.forEach(entry => console.log(formatLogEntry(entry)));
+  log.forEach(entry => console.log(formatLogEntry(entry, monster.visual)));
   console.log();
 
   if(playerFighter.state.hp <= 0) {
@@ -295,13 +314,13 @@ async function processDeath(game: GameModel) {
   game.location = {type: 'surface'};
 }
 
-function formatLogEntry(entry: CombatLogEntry): string {
+function formatLogEntry(entry: CombatLogEntry, mv: MonsterVisualModel): string {
   switch (entry.type) {
     case 'hit':
       if(entry.source === Fighter.Player && entry.target === Fighter.Monster)
-        return `${String(entry.at).padStart(3)}: You hit monster for ${entry.damage}, hp ${entry.hpBefore} -> ${entry.hpAfter}`;
+        return `${String(entry.at).padStart(3)}: You hit ${mv.nameDefinite} for ${entry.damage}, hp ${entry.hpBefore} -> ${entry.hpAfter}`;
       if(entry.source === Fighter.Monster && entry.target === Fighter.Player)
-        return `${String(entry.at).padStart(3)}: Monster hits you for ${entry.damage}, hp ${entry.hpBefore} -> ${entry.hpAfter}`;
+        return `${String(entry.at).padStart(3)}: ${capitalizeFirst(mv.nameDefinite)} hits you for ${entry.damage}, hp ${entry.hpBefore} -> ${entry.hpAfter}`;
       throw new Error(`Invalid source and target for hit entry`);
     default:
       throw new Error(`Unsupported log entry type: ${(entry as {type: string}).type}`)
