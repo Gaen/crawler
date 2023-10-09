@@ -115,8 +115,13 @@ export class MonsterModel implements ICharacter {
 
 // region dungeon
 
+export interface MonsterSpawnDefinition {
+  def: MonsterDefinition,
+  weight: number,
+}
+
 export interface DungeonLevelDefinition {
-  monster: MonsterDefinition,
+  monsters: MonsterSpawnDefinition[],
   boss: MonsterDefinition,
   difficulty: number,
 }
@@ -126,11 +131,28 @@ export class DungeonLevelModel {
   constructor(private readonly _def: DungeonLevelDefinition) {}
 
   public spawnMonster(): MonsterModel {
-    return new MonsterModel(this._def.monster, this._def.difficulty);
+    return new MonsterModel(this.rollMonster(), this._def.difficulty);
   }
 
   public spawnBoss(): MonsterModel {
     return new MonsterModel(this._def.boss, this._def.difficulty);
+  }
+
+  private rollMonster(): MonsterDefinition {
+
+    const roll = Math.random() * this._def.monsters.map(({weight}) => weight).reduce((a, b) => a + b);
+
+    let cur = 0;
+
+    for(const m of this._def.monsters) {
+
+      if(cur + m.weight >= roll)
+        return m.def;
+
+      cur += m.weight;
+    }
+
+    throw new Error('No monster rolled');
   }
 }
 

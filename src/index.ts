@@ -40,7 +40,7 @@ function initGame(): GameModel {
     cooldown: 117,
   };
 
-  const monster = {
+  const rat = {
     visual: {
       nameShort: 'rat',
       nameIndefinite: 'a rat',
@@ -54,7 +54,35 @@ function initGame(): GameModel {
     cooldown: 121,
   };
 
-  const boss = {
+  const slime = {
+    visual: {
+      nameShort: 'slime',
+      nameIndefinite: 'a slime',
+      nameDefinite: 'the slime',
+    },
+    hp: 50,
+    damage: {
+      min: 5,
+      max: 15,
+    },
+    cooldown: 121,
+  };
+
+  const spider = {
+    visual: {
+      nameShort: 'spider',
+      nameIndefinite: 'a spider',
+      nameDefinite: 'the spider',
+    },
+    hp: 50,
+    damage: {
+      min: 5,
+      max: 15,
+    },
+    cooldown: 121,
+  };
+
+  const ogre = {
     visual: {
       nameShort: 'ogre',
       nameIndefinite: 'an ogre',
@@ -68,16 +96,67 @@ function initGame(): GameModel {
     cooldown: 137,
   };
 
+  // sample spawn def
+  const monsters = [
+    {
+      def: rat,
+      weight: 1
+    },
+    {
+      def: slime,
+      weight: 1
+    },
+    {
+      def: spider,
+      weight: 1
+    },
+  ];
+
   return {
     exit: false,
     location: {type: 'surface'},
     player: new PlayerModel(player),
     dungeon: new DungeonModel(new Map([
-      [1, {monster, boss, difficulty: 1.0}],
-      [2, {monster, boss, difficulty: 1.2}],
-      [3, {monster, boss, difficulty: 1.5}],
-      [4, {monster, boss, difficulty: 2.0}],
-      [5, {monster, boss, difficulty: 2.5}],
+      [
+        1,
+        {
+          monsters,
+          boss: ogre,
+          difficulty: 1.0,
+        }
+      ],
+      [
+        2,
+        {
+          monsters,
+          boss: ogre,
+          difficulty: 1.2,
+        }
+      ],
+      [
+        3,
+        {
+          monsters,
+          boss: ogre,
+          difficulty: 1.5,
+        }
+      ],
+      [
+        4,
+        {
+          monsters,
+          boss: ogre,
+          difficulty: 2.0,
+        }
+      ],
+      [
+        5,
+        {
+          monsters,
+          boss: ogre,
+          difficulty: 2.5,
+        }
+      ],
     ]))
   };
 }
