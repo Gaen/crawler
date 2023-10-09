@@ -23,21 +23,21 @@ function makeFighterModel(character: CharacterModel): FighterModel {
 function initGame(): GameModel {
 
   const monster = {
-    hp: {min: 50, max: 100},
+    hp: 50,
     damage: {
-      min: {min: 5, max: 10},
-      max: {min: 10, max: 20},
+      min: 5,
+      max: 15,
     },
-    cooldown: {min: 100, max: 200},
+    cooldown: 121,
   };
 
   const boss = {
-    hp: {min: 50, max: 100},
+    hp: 150,
     damage: {
-      min: {min: 5, max: 10},
-      max: {min: 10, max: 20},
+      min: 15,
+      max: 20,
     },
-    cooldown: {min: 100, max: 200},
+    cooldown: 137,
   };
 
   return {

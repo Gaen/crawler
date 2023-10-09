@@ -1,4 +1,4 @@
-import {random, scale} from './utils';
+import {scale} from './utils';
 
 export type GameModel = {
   exit: boolean,
@@ -35,18 +35,18 @@ export type DungeonLocation = {
 
 // region dungeon
 
-export interface MonsterSpawnDefinition {
-  hp: {min: number, max: number},
+export interface MonsterDefinition {
+  hp: number,
   damage: {
-    min: {min: number, max: number},
-    max: {min: number, max: number},
+    min: number,
+    max: number,
   },
-  cooldown: {min: number, max: number},
+  cooldown: number,
 }
 
 export interface DungeonLevelDefinition {
-  monster: MonsterSpawnDefinition,
-  boss: MonsterSpawnDefinition,
+  monster: MonsterDefinition,
+  boss: MonsterDefinition,
   difficulty: number,
 }
 
@@ -62,13 +62,13 @@ export class DungeonLevelModel {
     return this.spawn(this._def.monster, this._def.difficulty);
   }
 
-  private spawn(def: MonsterSpawnDefinition, difficulty: number): CharacterModel {
+  private spawn(def: MonsterDefinition, difficulty: number): CharacterModel {
 
-    const hp = scale(random(def.hp), difficulty);
-    const cooldown = scale(random(def.cooldown), difficulty);
+    const hp = scale(def.hp, difficulty);
+    const cooldown = scale(def.cooldown, difficulty);
     const damage = {
-      min: scale(random(def.damage.min), difficulty),
-      max: scale(random(def.damage.max), difficulty),
+      min: scale(def.damage.min, difficulty),
+      max: scale(def.damage.max, difficulty),
     };
 
     return {
