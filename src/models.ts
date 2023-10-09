@@ -3,20 +3,9 @@ import {scale} from './utils';
 export type GameModel = {
   exit: boolean,
   location: PlayerLocation,
-  player: CharacterModel,
+  player: PlayerModel,
   dungeon: DungeonModel,
 }
-
-// region character
-
-export type CharacterModel = {
-  hp: number,
-  maxHp: number,
-  damage: {min: number, max: number},
-  cooldown: number,
-};
-
-// endregion
 
 // region location
 
@@ -33,7 +22,49 @@ export type DungeonLocation = {
 
 // endregion
 
-// region dungeon
+// region character
+
+export interface ICharacter {
+  readonly hpMax: number,
+  readonly hpCurrent: number,
+  readonly damageMin: number,
+  readonly damageMax: number,
+  readonly cooldown: number,
+}
+
+// endregion
+
+// region player
+
+export interface PlayerDefinition {
+  hp: number,
+  damage: {
+    min: number,
+    max: number,
+  },
+  cooldown: number,
+}
+
+export class PlayerModel implements ICharacter {
+
+  public hpMax: number;
+  public hpCurrent: number;
+  public damageMin: number;
+  public damageMax: number;
+  public cooldown: number;
+
+  constructor(def: PlayerDefinition) {
+    this.hpMax = def.hp;
+    this.hpCurrent = def.hp;
+    this.damageMin = def.damage.min;
+    this.damageMax = def.damage.max;
+    this.cooldown = def.cooldown;
+  }
+}
+
+// endregion
+
+// region monster
 
 export interface MonsterDefinition {
   hp: number,
@@ -43,6 +74,24 @@ export interface MonsterDefinition {
   },
   cooldown: number,
 }
+
+export class MonsterModel implements ICharacter {
+
+  constructor(
+    private readonly _def: MonsterDefinition,
+    private readonly _multiplier = 1
+  ) {}
+
+  public get hpMax() { return scale(this._def.hp, this._multiplier) }
+  public get hpCurrent() { return scale(this._def.hp, this._multiplier) };
+  public get damageMin() { return scale(this._def.damage.min, this._multiplier) };
+  public get damageMax() { return scale(this._def.damage.max, this._multiplier) };
+  public get cooldown() { return scale(this._def.cooldown, this._multiplier) };
+}
+
+// endregion
+
+// region dungeon
 
 export interface DungeonLevelDefinition {
   monster: MonsterDefinition,
@@ -54,29 +103,12 @@ export class DungeonLevelModel {
 
   constructor(private readonly _def: DungeonLevelDefinition) {}
 
-  public spawnMonster(): CharacterModel {
-    return this.spawn(this._def.monster, this._def.difficulty);
+  public spawnMonster(): MonsterModel {
+    return new MonsterModel(this._def.monster, this._def.difficulty);
   }
 
-  public spawnBoss(): CharacterModel {
-    return this.spawn(this._def.monster, this._def.difficulty);
-  }
-
-  private spawn(def: MonsterDefinition, difficulty: number): CharacterModel {
-
-    const hp = scale(def.hp, difficulty);
-    const cooldown = scale(def.cooldown, difficulty);
-    const damage = {
-      min: scale(def.damage.min, difficulty),
-      max: scale(def.damage.max, difficulty),
-    };
-
-    return {
-      hp,
-      maxHp: hp,
-      damage,
-      cooldown,
-    }
+  public spawnBoss(): MonsterModel {
+    return new MonsterModel(this._def.boss, this._def.difficulty);
   }
 }
 

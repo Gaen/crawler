@@ -2,25 +2,34 @@
 
 import {CombatLogEntry, Fighter, FighterModel, simulateCombat, simulateFlee} from './combat';
 import {rollPerception} from './mechanics';
-import {CharacterModel, DungeonModel, GameModel, PlayerLocation} from './models';
+import {ICharacter, DungeonModel, GameModel, PlayerLocation, PlayerModel, MonsterModel} from './models';
 import * as ui from './ui';
 
-function makeFighterModel(character: CharacterModel): FighterModel {
+function makeFighterModel(character: ICharacter): FighterModel {
   return {
     def: {
       damage: {
-        min: character.damage.min,
-        max: character.damage.max,
+        min: character.damageMin,
+        max: character.damageMax,
       },
       cooldown: character.cooldown,
     },
     state: {
-      hp: character.hp,
+      hp: character.hpCurrent,
     }
   }
 }
 
 function initGame(): GameModel {
+
+  const player = {
+    hp: 100,
+    damage: {
+      min: 10,
+      max: 20
+    },
+    cooldown: 117,
+  };
 
   const monster = {
     hp: 50,
@@ -43,12 +52,7 @@ function initGame(): GameModel {
   return {
     exit: false,
     location: {type: 'surface'},
-    player: {
-      hp: 100,
-      maxHp: 100,
-      damage: {min: 10, max: 20},
-      cooldown: 117,
-    },
+    player: new PlayerModel(player),
     dungeon: new DungeonModel(new Map([
       [1, {monster, boss, difficulty: 1.0}],
       [2, {monster, boss, difficulty: 1.2}],
@@ -65,7 +69,7 @@ async function processExit(game: GameModel) {
 }
 
 async function processPlayerStats(game: GameModel) {
-  console.log(`damage:   ${game.player.damage.min} - ${game.player.damage.max}`);
+  console.log(`damage:   ${game.player.damageMin} - ${game.player.damageMax}`);
   console.log(`cooldown: ${game.player.cooldown}`);
 }
 
@@ -83,7 +87,7 @@ async function processStairs(game: GameModel) {
   }
 
   await ui.select(
-    `${formatLocation(game.location)} | hp: ${game.player.hp}`,
+    `${formatLocation(game.location)} | hp: ${game.player.hpCurrent}`,
     [
       {
         title: 'Surface',
@@ -100,7 +104,7 @@ async function processStairs(game: GameModel) {
 async function processSurface(game: GameModel) {
 
   await ui.select(
-    `Surface | hp: ${game.player.hp}`,
+    `Surface | hp: ${game.player.hpCurrent}`,
     [
       {
         title: 'Stairs',
@@ -111,7 +115,7 @@ async function processSurface(game: GameModel) {
         title: 'Well',
         description: 'Restore hp',
         action: async () => {
-          game.player.hp = game.player.maxHp;
+          game.player.hpCurrent = game.player.hpMax;
           console.log('You feel refreshed');
         },
       },
@@ -135,7 +139,7 @@ async function processDungeon(game: GameModel) {
     throw new Error('Not in dungeon');
 
   await ui.select(
-    `Dungeon ${game.location.level} | hp: ${game.player.hp}`,
+    `Dungeon ${game.location.level} | hp: ${game.player.hpCurrent}`,
     [
       {
         title: 'Explore',
@@ -170,8 +174,8 @@ async function processExplore(game: GameModel) {
 
   console.log();
   console.log('You see a monster, its stats are:');
-  console.log(`hp:       ${monster.hp}`);
-  console.log(`damage:   ${monster.damage.min} - ${monster.damage.max}`);
+  console.log(`hp:       ${monster.hpCurrent}`);
+  console.log(`damage:   ${monster.damageMin} - ${monster.damageMax}`);
   console.log(`cooldown: ${monster.cooldown}`);
   console.log();
 
@@ -181,13 +185,13 @@ async function processExplore(game: GameModel) {
     await processEncounterNoticed(game, monster);
 }
 
-async function processEncounterNoticed(game: GameModel, monster: CharacterModel) {
+async function processEncounterNoticed(game: GameModel, monster: MonsterModel) {
 
   console.log('It noticed you!');
   console.log();
 
   await ui.select(
-    `Monster | hp: ${game.player.hp}`,
+    `Monster | hp: ${game.player.hpCurrent}`,
     [
       {
         title: 'Fight',
@@ -203,13 +207,13 @@ async function processEncounterNoticed(game: GameModel, monster: CharacterModel)
   );
 }
 
-async function processEncounterUnnoticed(game: GameModel, monster: CharacterModel) {
+async function processEncounterUnnoticed(game: GameModel, monster: MonsterModel) {
 
   console.log('It didn\'t notice you.');
   console.log();
 
   await ui.select(
-    `Monster | hp: ${game.player.hp}`,
+    `Monster | hp: ${game.player.hpCurrent}`,
     [
       {
         title: 'Fight',
@@ -225,7 +229,7 @@ async function processEncounterUnnoticed(game: GameModel, monster: CharacterMode
   );
 }
 
-async function processFight(game: GameModel, monster: CharacterModel, playerInitiative: boolean) {
+async function processFight(game: GameModel, monster: MonsterModel, playerInitiative: boolean) {
 
   const playerFighter = makeFighterModel(game.player);
   const monsterFighter = makeFighterModel(monster);
@@ -250,7 +254,7 @@ async function processFight(game: GameModel, monster: CharacterModel, playerInit
     return;
   }
 
-  game.player.hp = playerFighter.state.hp;
+  game.player.hpCurrent = playerFighter.state.hp;
 
   console.log('You survived!');
   console.log();
@@ -258,7 +262,7 @@ async function processFight(game: GameModel, monster: CharacterModel, playerInit
   // TODO drop loot, give exp, etc
 }
 
-async function processFlee(game: GameModel, monster: CharacterModel) {
+async function processFlee(game: GameModel, monster: MonsterModel) {
 
   const playerFighter = makeFighterModel(game.player);
   const monsterFighter = makeFighterModel(monster);
@@ -274,7 +278,7 @@ async function processFlee(game: GameModel, monster: CharacterModel) {
     return;
   }
 
-  game.player.hp = playerFighter.state.hp;
+  game.player.hpCurrent = playerFighter.state.hp;
 
   console.log('You survived!');
   console.log();
@@ -287,7 +291,7 @@ async function processRetreat(game: GameModel) {
 async function processDeath(game: GameModel) {
   console.log('You died and revived at the well');
   console.log();
-  game.player.hp = game.player.maxHp;
+  game.player.hpCurrent = game.player.hpMax;
   game.location = {type: 'surface'};
 }
 
