@@ -42,6 +42,26 @@ function initGame(): GameModel {
   };
 }
 
+function locationMessage(game: GameModel): string {
+
+  function formatLocation(location: PlayerLocation): string {
+    switch (location.type) {
+      case 'surface':
+        return 'Surface';
+      case 'dungeon':
+        return `Dungeon ${location.level}`;
+      default:
+        throw new Error(`Unsupported location type: ${(location as { type: string }).type}`);
+    }
+  }
+
+  return `${formatLocation(game.location)} | hp: ${game.player.hpCurrent} / ${game.player.hpMax}`;
+}
+
+function monsterMessage(game: GameModel, monster: MonsterModel): string {
+  return `${capitalizeFirst(monster.visual.nameShort)} | hp: ${game.player.hpCurrent} / ${game.player.hpMax}`;
+}
+
 async function processExit(game: GameModel) {
   console.log('Exiting');
   game.exit = true;
@@ -58,19 +78,8 @@ async function processPlayerStats(game: GameModel) {
 
 async function processStairs(game: GameModel) {
 
-  function formatLocation(location: PlayerLocation): string {
-    switch (location.type) {
-      case 'surface':
-        return 'Surface';
-      case 'dungeon':
-        return `Dungeon ${location.level}`;
-      default:
-        throw new Error(`Unsupported location type: ${(location as { type: string }).type}`);
-    }
-  }
-
   await ui.select(
-    `${formatLocation(game.location)} | hp: ${game.player.hpCurrent}`,
+    locationMessage(game),
     [
       {
         title: 'Surface',
@@ -87,7 +96,7 @@ async function processStairs(game: GameModel) {
 async function processSurface(game: GameModel) {
 
   await ui.select(
-    `Surface | hp: ${game.player.hpCurrent}`,
+    locationMessage(game),
     [
       {
         title: 'Stairs',
@@ -130,7 +139,7 @@ async function processDungeon(game: GameModel) {
   const level = game.dungeon.level(game.location.level);
 
   await ui.select(
-    `Dungeon ${game.location.level} | hp: ${game.player.hpCurrent}`,
+    locationMessage(game),
     [
       {
         title: 'Explore',
@@ -199,7 +208,7 @@ async function processMonsterEncounter(game: GameModel, monster: MonsterModel, m
     console.log();
 
     await ui.select(
-      `${capitalizeFirst(monster.visual.nameShort)} | hp: ${game.player.hpCurrent}`,
+      monsterMessage(game, monster),
       [
         {
           title: 'Fight',
@@ -220,7 +229,7 @@ async function processMonsterEncounter(game: GameModel, monster: MonsterModel, m
     console.log();
 
     await ui.select(
-      `${capitalizeFirst(monster.visual.nameShort)} | hp: ${game.player.hpCurrent}`,
+      monsterMessage(game, monster),
       [
         {
           title: 'Fight',
