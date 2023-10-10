@@ -20,12 +20,18 @@ const monsters = [
   },
 ];
 
+// sample boss def
+const boss = {
+  def: ogre,
+  nMonstersToKill: 3,
+}
+
 export default new Map([
   [
     1,
     {
       monsters,
-      boss: ogre,
+      boss,
       difficulty: 1.0,
     }
   ],
@@ -33,7 +39,7 @@ export default new Map([
     2,
     {
       monsters,
-      boss: ogre,
+      boss,
       difficulty: 1.2,
     }
   ],
@@ -41,7 +47,7 @@ export default new Map([
     3,
     {
       monsters,
-      boss: ogre,
+      boss,
       difficulty: 1.5,
     }
   ],
@@ -49,7 +55,7 @@ export default new Map([
     4,
     {
       monsters,
-      boss: ogre,
+      boss,
       difficulty: 2.0,
     }
   ],
@@ -57,7 +63,7 @@ export default new Map([
     5,
     {
       monsters,
-      boss: ogre,
+      boss,
       difficulty: 2.5,
     }
   ],

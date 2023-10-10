@@ -117,6 +117,8 @@ async function processDungeon(game: GameModel) {
   if(game.location.type !== 'dungeon')
     throw new Error('Not in dungeon');
 
+  const level = game.dungeon.level(game.location.level);
+
   await ui.select(
     `Dungeon ${game.location.level} | hp: ${game.player.hpCurrent}`,
     [
@@ -124,6 +126,12 @@ async function processDungeon(game: GameModel) {
         title: 'Explore',
         description: 'Pick a fight',
         action: async () => await processExplore(game),
+      },
+      {
+        title: 'Boss',
+        description: 'Go straight to boss lair',
+        visible: level.didFindBoss,
+        action: async () => await processBossEncounter(),
       },
       {
         title: 'Stairs',
@@ -149,7 +157,22 @@ async function processExplore(game: GameModel) {
   if(game.location.type !== 'dungeon')
     throw new Error('Not in dungeon');
 
-  const monster = game.dungeon.level(game.location.level).spawnMonster();
+  const level = game.dungeon.level(game.location.level);
+
+  if(level.canFindBoss) {
+
+    level.didFindBoss = true;
+
+    console.log();
+    console.log('You have found a boss!');
+    console.log();
+
+    await processBossEncounter();
+
+    return;
+  }
+
+  const monster = level.spawnMonster();
 
   console.log();
   console.log(`You see ${monster.visual.nameIndefinite}.`);
@@ -208,7 +231,15 @@ async function processEncounterUnnoticed(game: GameModel, monster: MonsterModel)
   );
 }
 
+async function processBossEncounter() {
+  console.log('TODO: here be boss stats');
+  console.log('TODO: here be a choice to either fight or retreat');
+}
+
 async function processFight(game: GameModel, monster: MonsterModel, playerInitiative: boolean) {
+
+  if(game.location.type !== 'dungeon')
+    throw new Error('Not in dungeon');
 
   const playerFighter = makeFighterModel(game.player);
   const monsterFighter = makeFighterModel(monster);
@@ -238,6 +269,7 @@ async function processFight(game: GameModel, monster: MonsterModel, playerInitia
   console.log('You survived!');
   console.log();
 
+  game.dungeon.level(game.location.level).nMonstersKilled++;
   // TODO drop loot, give exp, etc
 }
 

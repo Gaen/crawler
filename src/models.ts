@@ -120,22 +120,32 @@ export interface MonsterSpawnDefinition {
   weight: number,
 }
 
+export interface BossDefinition {
+  def: MonsterDefinition,
+  nMonstersToKill: number,
+}
+
 export interface DungeonLevelDefinition {
   monsters: MonsterSpawnDefinition[],
-  boss: MonsterDefinition,
+  boss: BossDefinition,
   difficulty: number,
 }
 
 export class DungeonLevelModel {
 
+  public nMonstersKilled = 0;
+  public didFindBoss = false;
+
   constructor(private readonly _def: DungeonLevelDefinition) {}
+
+  public get canFindBoss() { return !this.didFindBoss && this.nMonstersKilled >= this._def.boss.nMonstersToKill }
 
   public spawnMonster(): MonsterModel {
     return new MonsterModel(this.rollMonster(), this._def.difficulty);
   }
 
   public spawnBoss(): MonsterModel {
-    return new MonsterModel(this._def.boss, this._def.difficulty);
+    return new MonsterModel(this._def.boss.def, this._def.difficulty);
   }
 
   private rollMonster(): MonsterDefinition {
