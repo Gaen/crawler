@@ -128,10 +128,10 @@ async function processDungeon(game: GameModel) {
         action: async () => await processExplore(game),
       },
       {
-        title: 'Boss',
-        description: 'Go straight to boss lair',
+        title: 'Lair',
+        description: 'Go straight to the lair',
         visible: level.didFindBoss,
-        action: async () => await processBossEncounter(),
+        action: async () => await processMonsterEncounter(game, level.spawnBoss(), false),
       },
       {
         title: 'Stairs',
@@ -164,15 +164,17 @@ async function processExplore(game: GameModel) {
     level.didFindBoss = true;
 
     console.log();
-    console.log('You have found a boss!');
-    console.log();
+    console.log('You have found a lair!');
 
-    await processBossEncounter();
+    await processMonsterEncounter(game, level.spawnBoss(), false);
 
     return;
   }
 
-  const monster = level.spawnMonster();
+  await processMonsterEncounter(game, level.spawnMonster(), rollPerception());
+}
+
+async function processMonsterEncounter(game: GameModel, monster: MonsterModel, monsterNoticedPlayer: boolean) {
 
   console.log();
   console.log(`You see ${monster.visual.nameIndefinite}.`);
@@ -181,59 +183,48 @@ async function processExplore(game: GameModel) {
   console.log(`Cooldown: ${monster.cooldown}`);
   console.log();
 
-  if(rollPerception())
-    await processEncounterUnnoticed(game, monster);
-  else
-    await processEncounterNoticed(game, monster);
-}
+  if(monsterNoticedPlayer) {
 
-async function processEncounterNoticed(game: GameModel, monster: MonsterModel) {
+    console.log('It has noticed you!');
+    console.log();
 
-  console.log('It noticed you!');
-  console.log();
+    await ui.select(
+      `${capitalizeFirst(monster.visual.nameShort)} | hp: ${game.player.hpCurrent}`,
+      [
+        {
+          title: 'Fight',
+          description: 'Start a fight',
+          action: async () => await processFight(game, monster, false),
+        },
+        {
+          title: 'Flee',
+          description: 'Flee and get hit in the back',
+          action: async () => await processFlee(game, monster),
+        },
+      ],
+    );
 
-  await ui.select(
-    `${capitalizeFirst(monster.visual.nameShort)} | hp: ${game.player.hpCurrent}`,
-    [
-      {
-        title: 'Fight',
-        description: 'Start a fight',
-        action: async () => await processFight(game, monster, false),
-      },
-      {
-        title: 'Flee',
-        description: 'Flee and get hit in the back',
-        action: async () => await processFlee(game, monster),
-      },
-    ],
-  );
-}
+  } else {
 
-async function processEncounterUnnoticed(game: GameModel, monster: MonsterModel) {
+    console.log('It hasn\'t noticed you.');
+    console.log();
 
-  console.log('It didn\'t notice you.');
-  console.log();
-
-  await ui.select(
-    `${capitalizeFirst(monster.visual.nameShort)} | hp: ${game.player.hpCurrent}`,
-    [
-      {
-        title: 'Fight',
-        description: 'Start a fight',
-        action: async () => await processFight(game, monster, true),
-      },
-      {
-        title: 'Retreat',
-        description: 'Retreat safely',
-        action: async () => await processRetreat(game),
-      },
-    ],
-  );
-}
-
-async function processBossEncounter() {
-  console.log('TODO: here be boss stats');
-  console.log('TODO: here be a choice to either fight or retreat');
+    await ui.select(
+      `${capitalizeFirst(monster.visual.nameShort)} | hp: ${game.player.hpCurrent}`,
+      [
+        {
+          title: 'Fight',
+          description: 'Start a fight',
+          action: async () => await processFight(game, monster, true),
+        },
+        {
+          title: 'Retreat',
+          description: 'Retreat safely',
+          action: async () => await processRetreat(game),
+        },
+      ],
+    );
+  }
 }
 
 async function processFight(game: GameModel, monster: MonsterModel, playerInitiative: boolean) {
