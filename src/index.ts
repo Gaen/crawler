@@ -48,8 +48,12 @@ async function processExit(game: GameModel) {
 }
 
 async function processPlayerStats(game: GameModel) {
-  console.log(`damage:   ${game.player.damageMin} - ${game.player.damageMax}`);
-  console.log(`cooldown: ${game.player.cooldown}`);
+  console.log();
+  console.log('Your stats:');
+  console.log(` - hp:       ${game.player.hpCurrent} / ${game.player.hpMax}`);
+  console.log(` - damage:   ${game.player.damageMin} - ${game.player.damageMax}`);
+  console.log(` - cooldown: ${game.player.cooldown}`);
+  console.log();
 }
 
 async function processStairs(game: GameModel) {
@@ -93,10 +97,7 @@ async function processSurface(game: GameModel) {
       {
         title: 'Well',
         description: 'Restore hp',
-        action: async () => {
-          game.player.hpCurrent = game.player.hpMax;
-          console.log('You feel refreshed');
-        },
+        action: async () => await processWell(game),
       },
       {
         title: 'Stats',
@@ -110,6 +111,15 @@ async function processSurface(game: GameModel) {
       },
     ],
   );
+}
+
+async function processWell(game: GameModel) {
+
+  game.player.hpCurrent = game.player.hpMax;
+
+  console.log();
+  console.log('You feel refreshed.');
+  console.log();
 }
 
 async function processDungeon(game: GameModel) {
@@ -177,10 +187,10 @@ async function processExplore(game: GameModel) {
 async function processMonsterEncounter(game: GameModel, monster: MonsterModel, monsterNoticedPlayer: boolean) {
 
   console.log();
-  console.log(`You see ${monster.visual.nameIndefinite}.`);
-  console.log(`Hp:       ${monster.hpCurrent}`);
-  console.log(`Damage:   ${monster.damageMin} - ${monster.damageMax}`);
-  console.log(`Cooldown: ${monster.cooldown}`);
+  console.log(`You see ${monster.visual.nameIndefinite}:`);
+  console.log(` - hp:       ${monster.hpCurrent} / ${monster.hpMax}`);
+  console.log(` - damage:   ${monster.damageMin} - ${monster.damageMax}`);
+  console.log(` - cooldown: ${monster.cooldown}`);
   console.log();
 
   if(monsterNoticedPlayer) {
@@ -287,7 +297,9 @@ async function processFlee(game: GameModel, monster: MonsterModel) {
 }
 
 async function processRetreat(game: GameModel) {
+  console.log();
   console.log('Retreating');
+  console.log();
 }
 
 async function processDeath(game: GameModel) {
