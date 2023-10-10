@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+import chalk from 'chalk';
+
 import {CombatLogEntry, Fighter, FighterModel, simulateCombat, simulateFlee} from './combat';
 import {rollPerception} from './mechanics';
 import {
@@ -55,11 +57,30 @@ function locationMessage(game: GameModel): string {
     }
   }
 
-  return `${formatLocation(game.location)} | hp: ${game.player.hpCurrent} / ${game.player.hpMax}`;
+  return [
+    [
+      chalk.red.dim('hp'),
+      chalk.redBright(game.player.hpCurrent),
+      chalk.red.dim('/'),
+      chalk.red.dim(game.player.hpMax),
+    ].join(' '),
+    '|',
+    chalk.whiteBright(formatLocation(game.location)),
+  ].join(' ');
 }
 
 function monsterMessage(game: GameModel, monster: MonsterModel): string {
-  return `${capitalizeFirst(monster.visual.nameShort)} | hp: ${game.player.hpCurrent} / ${game.player.hpMax}`;
+
+  return [
+    [
+      chalk.red.dim('hp'),
+      chalk.redBright(game.player.hpCurrent),
+      chalk.red.dim('/'),
+      chalk.red.dim(game.player.hpMax),
+    ].join(' '),
+    '|',
+    chalk.yellowBright(capitalizeFirst(monster.visual.nameShort)),
+  ].join(' ');
 }
 
 async function processExit(game: GameModel) {
@@ -183,7 +204,7 @@ async function processExplore(game: GameModel) {
     level.didFindBoss = true;
 
     console.log();
-    console.log('You have found a lair!');
+    console.log(chalk.whiteBright('You have found a lair!'));
 
     await processMonsterEncounter(game, level.spawnBoss(), false);
 
@@ -196,7 +217,7 @@ async function processExplore(game: GameModel) {
 async function processMonsterEncounter(game: GameModel, monster: MonsterModel, monsterNoticedPlayer: boolean) {
 
   console.log();
-  console.log(`You see ${monster.visual.nameIndefinite}:`);
+  console.log(`You see ${chalk.yellowBright(monster.visual.nameIndefinite)}:`);
   console.log(` - hp:       ${monster.hpCurrent} / ${monster.hpMax}`);
   console.log(` - damage:   ${monster.damageMin} - ${monster.damageMax}`);
   console.log(` - cooldown: ${monster.cooldown}`);
@@ -319,12 +340,24 @@ async function processDeath(game: GameModel) {
 }
 
 function formatLogEntry(entry: CombatLogEntry, mv: MonsterVisualModel): string {
+
+  const player = 'you';
+  const monster = mv.nameDefinite;
+
   switch (entry.type) {
     case 'hit':
       if(entry.source === Fighter.Player && entry.target === Fighter.Monster)
-        return `${String(entry.at).padStart(3)}: You hit ${mv.nameDefinite} for ${entry.damage}, hp ${entry.hpBefore} -> ${entry.hpAfter}`;
+        return [
+          chalk.grey(`${String(entry.at).padStart(3)}:`),
+          `${chalk.red(capitalizeFirst(player))} hit ${chalk.yellow(monster)} for ${chalk.whiteBright(entry.damage)},`,
+          `hp ${chalk.yellow(entry.hpBefore)} -> ${chalk.yellowBright(entry.hpAfter)}`
+        ].join(' ');
       if(entry.source === Fighter.Monster && entry.target === Fighter.Player)
-        return `${String(entry.at).padStart(3)}: ${capitalizeFirst(mv.nameDefinite)} hits you for ${entry.damage}, hp ${entry.hpBefore} -> ${entry.hpAfter}`;
+        return [
+          chalk.grey(`${String(entry.at).padStart(3)}:`),
+          `${chalk.yellow(capitalizeFirst(monster))} hits ${chalk.red(player)} for ${chalk.whiteBright(entry.damage)},`,
+          `hp ${chalk.red(entry.hpBefore)} -> ${chalk.redBright(entry.hpAfter)}`
+        ].join(' ');
       throw new Error(`Invalid source and target for hit entry`);
     default:
       throw new Error(`Unsupported log entry type: ${(entry as {type: string}).type}`)
