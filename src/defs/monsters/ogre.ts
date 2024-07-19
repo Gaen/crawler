@@ -9,5 +9,5 @@ export default {
     min: 15,
     max: 20,
   },
-  cooldown: 137,
+  cooldown: 203,
 };
