@@ -335,8 +335,12 @@ function formatLogEntry(player:PlayerModel, monster:MonsterModel, entry: CombatL
     return char === player ? 'you' : monster.visual.nameDefinite;
   }
 
-  function action(char: ICharacter) {
+  function hitAction(char: ICharacter) {
     return char === player ? 'hit' : 'hits';
+  }
+
+  function missAction(char: ICharacter) {
+    return char === player ? 'miss' : 'misses';
   }
 
   switch (entry.type) {
@@ -344,11 +348,18 @@ function formatLogEntry(player:PlayerModel, monster:MonsterModel, entry: CombatL
       return [
         chalk.grey(`${String(entry.at).padStart(3)}:`),
         `${colorizer(entry.source)(capitalizeFirst(name(entry.source)))}`,
-        action(entry.source),
+        hitAction(entry.source),
         `${colorizer(entry.target)(name(entry.target))}`,
         `for`,
         `${chalk.whiteBright(entry.damage)},`,
         `hp ${colorizer(entry.target)(entry.hpBefore)} -> ${colorizer(entry.target)(entry.hpAfter)}`
+      ].join(' ');
+    case 'miss':
+      return [
+        chalk.grey(`${String(entry.at).padStart(3)}:`),
+        `${colorizer(entry.source)(capitalizeFirst(name(entry.source)))}`,
+        missAction(entry.source),
+        `${colorizer(entry.target)(name(entry.target))}`,
       ].join(' ');
     default:
       throw new Error(`Unsupported log entry type: ${(entry as {type: string}).type}`)
