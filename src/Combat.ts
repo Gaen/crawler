@@ -1,11 +1,11 @@
 import {ICharacter} from './models';
-import {rollDamage, rollAttackSuccess} from './mechanics';
+import {rollDamage, rollAttackSuccess, rollEvadeSuccess} from './mechanics';
 
 // region combat log types
 
 export type CombatLog = CombatLogEntry[];
 
-export type CombatLogEntry = {at: number} & (HitEntry | MissEntry);
+export type CombatLogEntry = {at: number} & (HitEntry | MissEntry | EvadeEntry);
 
 type HitEntry = {
   type: 'hit',
@@ -18,6 +18,12 @@ type HitEntry = {
 
 type MissEntry = {
   type: 'miss',
+  source: ICharacter,
+  target: ICharacter,
+}
+
+type EvadeEntry = {
+  type: 'evade',
   source: ICharacter,
   target: ICharacter,
 }
@@ -44,7 +50,21 @@ export class Combat {
     const [fighter, readyAt] = this.findNextHit();
     const enemy = this.getEnemy(fighter);
 
-    if (rollAttackSuccess(fighter, enemy)) {
+    if (!rollAttackSuccess(fighter, enemy)) {
+      this._log.push({
+        at: readyAt,
+        type: 'miss' as const,
+        source: fighter,
+        target: enemy,
+      });
+    } else if (rollEvadeSuccess(fighter, enemy)) {
+      this._log.push({
+        at: readyAt,
+        type: 'evade' as const,
+        source: fighter,
+        target: enemy,
+      });
+    } else {
 
       const damage = rollDamage(fighter, enemy);
 
@@ -58,15 +78,6 @@ export class Combat {
         damage,
         hpBefore: enemy.hpCurrent + damage,
         hpAfter: enemy.hpCurrent,
-      });
-
-    } else {
-
-      this._log.push({
-        at: readyAt,
-        type: 'miss' as const,
-        source: fighter,
-        target: enemy,
       });
     }
 

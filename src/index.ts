@@ -370,6 +370,12 @@ function formatLogEntry(player:PlayerModel, monster:MonsterModel, entry: CombatL
         missAction(entry.source),
         `${colorizer(entry.target)(name(entry.target))}`,
       ].join(' ');
+    case 'evade':
+      return [
+        chalk.grey(`${String(entry.at).padStart(3)}:`),
+        `${colorizer(entry.target)(capitalizeFirst(name(entry.target)))}`,
+        'evaded'
+      ].join(' ');
     default:
       throw new Error(`Unsupported log entry type: ${(entry as {type: string}).type}`)
   }

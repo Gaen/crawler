@@ -9,6 +9,11 @@ export function rollAttackSuccess(attacker: ICharacter, defender: ICharacter): b
   return Math.random() > 0.1;
 }
 
+export function rollEvadeSuccess(attacker: ICharacter, defender: ICharacter): boolean {
+  // TODO respect characters stats
+  return Math.random() > 0.9;
+}
+
 export function rollDamage(source: ICharacter, target: ICharacter): number {
   return source.damageMin + Math.round(Math.random() * (source.damageMax - source.damageMin));
 }
