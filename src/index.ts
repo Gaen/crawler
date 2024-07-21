@@ -3,7 +3,7 @@
 import chalk from 'chalk';
 
 import {Combat, CombatLogEntry} from './Combat';
-import {rollSneak} from './mechanics';
+import {rollSneakSuccess} from './mechanics';
 import {
   ICharacter,
   DungeonModel,
@@ -200,7 +200,7 @@ async function processExplore(game: GameModel) {
 
   const monster = level.spawnMonster();
 
-  await processMonsterEncounter(game, monster, rollSneak(monster, game.player));
+  await processMonsterEncounter(game, monster, rollSneakSuccess(monster, game.player));
 }
 
 async function processMonsterEncounter(game: GameModel, monster: MonsterModel, monsterNoticedPlayer: boolean) {

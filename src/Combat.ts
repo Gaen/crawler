@@ -1,5 +1,5 @@
 import {ICharacter} from './models';
-import {rollDamage, rollHit} from './mechanics';
+import {rollDamage, rollAttackSuccess} from './mechanics';
 
 // region combat log types
 
@@ -44,7 +44,7 @@ export class Combat {
     const [fighter, readyAt] = this.findNextHit();
     const enemy = this.getEnemy(fighter);
 
-    if (rollHit(fighter, enemy)) {
+    if (rollAttackSuccess(fighter, enemy)) {
 
       const damage = rollDamage(fighter, enemy);
 

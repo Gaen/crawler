@@ -1,14 +1,10 @@
 import {ICharacter} from './models';
 
-/**
- * Sneak roll.
- * @returns true source has been able to sneak on target
- */
-export function rollSneak(source: ICharacter, target: ICharacter): boolean {
-  return Math.random() * source.perception > Math.random() * target.perception;
+export function rollSneakSuccess(attacker: ICharacter, defender: ICharacter): boolean {
+  return Math.random() * attacker.perception > Math.random() * defender.perception;
 }
 
-export function rollHit(source: ICharacter, target: ICharacter): boolean {
+export function rollAttackSuccess(attacker: ICharacter, defender: ICharacter): boolean {
   // TODO respect characters stats
   return Math.random() > 0.1;
 }
