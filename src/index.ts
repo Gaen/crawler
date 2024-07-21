@@ -2,7 +2,7 @@
 
 import chalk from 'chalk';
 
-import {CombatLogEntry, Fighter, FighterModel, simulateCombat, simulateFlee} from './combat';
+import {Combat, CombatLogEntry} from './Combat';
 import {rollPerception} from './mechanics';
 import {
   ICharacter,
@@ -11,28 +11,12 @@ import {
   PlayerLocation,
   PlayerModel,
   MonsterModel,
-  MonsterVisualModel,
 } from './models';
 import * as ui from './ui';
 import {capitalizeFirst} from './utils';
 
 import playerDef from './defs/player';
 import dungeonDef from './defs/dungeon';
-
-function makeFighterModel(character: ICharacter): FighterModel {
-  return {
-    def: {
-      damage: {
-        min: character.damageMin,
-        max: character.damageMax,
-      },
-      cooldown: character.cooldown,
-    },
-    state: {
-      hp: character.hpCurrent,
-    }
-  }
-}
 
 function initGame(): GameModel {
 
@@ -272,11 +256,6 @@ async function processFight(game: GameModel, monster: MonsterModel, playerInitia
   if(game.location.type !== 'dungeon')
     throw new Error('Not in dungeon');
 
-  const playerFighter = makeFighterModel(game.player);
-  const monsterFighter = makeFighterModel(monster);
-
-  const log = simulateCombat(playerFighter, monsterFighter, playerInitiative ? Fighter.Player : Fighter.Monster);
-
   console.log();
 
   if(playerInitiative)
@@ -286,16 +265,22 @@ async function processFight(game: GameModel, monster: MonsterModel, playerInitia
 
   console.log();
 
-  log.forEach(entry => console.log(formatLogEntry(entry, monster.visual)))
+  const combat = new Combat([game.player, monster], playerInitiative ? game.player : monster);
+
+  while (combat.canContinue()) {
+    combat.tick();
+  }
+
+  const log = combat.getLog();
+
+  log.forEach(entry => console.log(formatLogEntry(game.player, monster, entry)))
 
   console.log();
 
-  if(playerFighter.state.hp <= 0) {
+  if(game.player.hpCurrent <= 0) {
     await processDeath(game);
     return;
   }
-
-  game.player.hpCurrent = playerFighter.state.hp;
 
   console.log('You survived!');
   console.log();
@@ -306,21 +291,22 @@ async function processFight(game: GameModel, monster: MonsterModel, playerInitia
 
 async function processFlee(game: GameModel, monster: MonsterModel) {
 
-  const playerFighter = makeFighterModel(game.player);
-  const monsterFighter = makeFighterModel(monster);
-
-  const log = simulateFlee(playerFighter, monsterFighter);
-
-  console.log();
-  log.forEach(entry => console.log(formatLogEntry(entry, monster.visual)));
   console.log();
 
-  if(playerFighter.state.hp <= 0) {
+  const combat = new Combat([game.player, monster], monster);
+
+  combat.tick();
+
+  const log = combat.getLog();
+
+  log.forEach(entry => console.log(formatLogEntry(game.player, monster, entry)));
+
+  console.log();
+
+  if(game.player.hpCurrent <= 0) {
     await processDeath(game);
     return;
   }
-
-  game.player.hpCurrent = playerFighter.state.hp;
 
   console.log('You survived!');
   console.log();
@@ -339,26 +325,31 @@ async function processDeath(game: GameModel) {
   game.location = {type: 'surface'};
 }
 
-function formatLogEntry(entry: CombatLogEntry, mv: MonsterVisualModel): string {
+function formatLogEntry(player:PlayerModel, monster:MonsterModel, entry: CombatLogEntry): string {
 
-  const player = 'you';
-  const monster = mv.nameDefinite;
+  function colorizer(char: ICharacter) {
+    return char === player ? chalk.red : chalk.yellow;
+  }
+
+  function name(char: ICharacter) {
+    return char === player ? 'you' : monster.visual.nameDefinite;
+  }
+
+  function action(char: ICharacter) {
+    return char === player ? 'hit' : 'hits';
+  }
 
   switch (entry.type) {
     case 'hit':
-      if(entry.source === Fighter.Player && entry.target === Fighter.Monster)
-        return [
-          chalk.grey(`${String(entry.at).padStart(3)}:`),
-          `${chalk.red(capitalizeFirst(player))} hit ${chalk.yellow(monster)} for ${chalk.whiteBright(entry.damage)},`,
-          `hp ${chalk.yellow(entry.hpBefore)} -> ${chalk.yellowBright(entry.hpAfter)}`
-        ].join(' ');
-      if(entry.source === Fighter.Monster && entry.target === Fighter.Player)
-        return [
-          chalk.grey(`${String(entry.at).padStart(3)}:`),
-          `${chalk.yellow(capitalizeFirst(monster))} hits ${chalk.red(player)} for ${chalk.whiteBright(entry.damage)},`,
-          `hp ${chalk.red(entry.hpBefore)} -> ${chalk.redBright(entry.hpAfter)}`
-        ].join(' ');
-      throw new Error(`Invalid source and target for hit entry`);
+      return [
+        chalk.grey(`${String(entry.at).padStart(3)}:`),
+        `${colorizer(entry.source)(capitalizeFirst(name(entry.source)))}`,
+        action(entry.source),
+        `${colorizer(entry.target)(name(entry.target))}`,
+        `for`,
+        `${chalk.whiteBright(entry.damage)},`,
+        `hp ${colorizer(entry.target)(entry.hpBefore)} -> ${colorizer(entry.target)(entry.hpAfter)}`
+      ].join(' ');
     default:
       throw new Error(`Unsupported log entry type: ${(entry as {type: string}).type}`)
   }

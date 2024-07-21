@@ -25,11 +25,13 @@ export type DungeonLocation = {
 // region character
 
 export interface ICharacter {
+
   readonly hpMax: number,
-  readonly hpCurrent: number,
   readonly damageMin: number,
   readonly damageMax: number,
   readonly cooldown: number,
+
+  hpCurrent: number,
 }
 
 // endregion
@@ -95,6 +97,8 @@ export class MonsterModel implements ICharacter {
 
   public readonly visual: MonsterVisualModel;
 
+  public hpCurrent: number;
+
   private readonly _def: MonsterDefinition;
   private readonly _multiplier: number;
 
@@ -102,10 +106,10 @@ export class MonsterModel implements ICharacter {
     this._def = def;
     this._multiplier = multiplier;
     this.visual = new MonsterVisualModel(def.visual);
+    this.hpCurrent = this.hpMax;
   }
 
   public get hpMax() { return scale(this._def.hp, this._multiplier) }
-  public get hpCurrent() { return scale(this._def.hp, this._multiplier) };
   public get damageMin() { return scale(this._def.damage.min, this._multiplier) };
   public get damageMax() { return scale(this._def.damage.max, this._multiplier) };
   public get cooldown() { return scale(this._def.cooldown, this._multiplier) };
