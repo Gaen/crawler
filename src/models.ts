@@ -58,6 +58,10 @@ export class PlayerModel implements ICharacter {
   public cooldown: number;
   public perception: number;
 
+  private _level = 1;
+  private _xp = 0;
+  private _sp = 0;
+
   constructor(def: PlayerDefinition) {
     this.hpMax = def.hp;
     this.hpCurrent = def.hp;
@@ -65,6 +69,14 @@ export class PlayerModel implements ICharacter {
     this.damageMax = def.damage.max;
     this.cooldown = def.cooldown;
     this.perception = def.perception;
+  }
+
+  public get level(): number  {return this._level };
+  public get xp(): number { return this._xp };
+
+  public addXp(value: number) {
+    this._xp += value;
+    // TODO process level-up
   }
 }
 

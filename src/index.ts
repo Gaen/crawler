@@ -48,9 +48,10 @@ function locationMessage(game: GameModel): string {
       chalk.red.dim('/'),
       chalk.red.dim(game.player.hpMax),
     ].join(' '),
-    '|',
+    `lv ${game.player.level}`,
+    `xp ${game.player.xp} / ?`,
     chalk.whiteBright(formatLocation(game.location)),
-  ].join(' ');
+  ].join(' | ');
 }
 
 function monsterMessage(game: GameModel, monster: MonsterModel): string {
@@ -286,11 +287,15 @@ async function processFight(game: GameModel, monster: MonsterModel, playerInitia
     return;
   }
 
-  console.log('You survived!');
-  console.log();
-
   game.dungeon.level(game.location.level).nMonstersKilled++;
-  // TODO drop loot, give exp, etc
+
+  // TODO should be based on dungeon level and monster difficulty
+  const xp = 10;
+
+  game.player.addXp(10);
+
+  console.log(`You survived and gained ${xp} xp!`);
+  console.log();
 }
 
 async function processFlee(game: GameModel, monster: MonsterModel) {
