@@ -1,4 +1,5 @@
 import {ICharacter} from './models';
+import {rollDamage} from './mechanics';
 
 // region combat log types
 
@@ -37,7 +38,7 @@ export class Combat {
     const [fighter, readyAt] = this.findNextHit();
     const enemy = this.getEnemy(fighter);
 
-    const damage = this.rollDamage(fighter, enemy);
+    const damage = rollDamage(fighter, enemy);
 
     enemy.hpCurrent -= damage;
     this._readyAt.set(fighter, readyAt + fighter.cooldown);
@@ -72,9 +73,5 @@ export class Combat {
       throw new Error('Enemy not found');
 
     return enemy;
-  }
-
-  private rollDamage(source: ICharacter, target: ICharacter): number {
-    return source.damageMin + Math.round(Math.random() * (source.damageMax - source.damageMin));
   }
 }
