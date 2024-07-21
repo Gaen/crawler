@@ -5,4 +5,5 @@ export default {
     max: 20
   },
   cooldown: 117,
+  perception: 100,
 };

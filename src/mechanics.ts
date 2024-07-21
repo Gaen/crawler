@@ -1,12 +1,11 @@
 import {ICharacter} from './models';
 
 /**
- * Perception roll.
- * @returns true if player wins
+ * Sneak roll.
+ * @returns true source has been able to sneak on target
  */
-export function rollPerception(): boolean {
-  // TODO respect player and monster stats
-  return Math.random() > 0.5;
+export function rollSneak(source: ICharacter, target: ICharacter): boolean {
+  return Math.random() * source.perception > Math.random() * target.perception;
 }
 
 export function rollHit(source: ICharacter, target: ICharacter): boolean {

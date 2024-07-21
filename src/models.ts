@@ -30,6 +30,7 @@ export interface ICharacter {
   readonly damageMin: number,
   readonly damageMax: number,
   readonly cooldown: number,
+  readonly perception: number;
 
   hpCurrent: number,
 }
@@ -45,6 +46,7 @@ export interface PlayerDefinition {
     max: number,
   },
   cooldown: number,
+  perception: number,
 }
 
 export class PlayerModel implements ICharacter {
@@ -54,6 +56,7 @@ export class PlayerModel implements ICharacter {
   public damageMin: number;
   public damageMax: number;
   public cooldown: number;
+  public perception: number;
 
   constructor(def: PlayerDefinition) {
     this.hpMax = def.hp;
@@ -61,6 +64,7 @@ export class PlayerModel implements ICharacter {
     this.damageMin = def.damage.min;
     this.damageMax = def.damage.max;
     this.cooldown = def.cooldown;
+    this.perception = def.perception;
   }
 }
 
@@ -82,6 +86,7 @@ export interface MonsterDefinition {
     max: number,
   },
   cooldown: number,
+  perception: number,
 }
 
 export class MonsterVisualModel {
@@ -113,6 +118,8 @@ export class MonsterModel implements ICharacter {
   public get damageMin() { return scale(this._def.damage.min, this._multiplier) };
   public get damageMax() { return scale(this._def.damage.max, this._multiplier) };
   public get cooldown() { return scale(this._def.cooldown, this._multiplier) };
+
+  public get perception() { return scale(this._def.perception, this._multiplier) };
 }
 
 // endregion

@@ -3,7 +3,7 @@
 import chalk from 'chalk';
 
 import {Combat, CombatLogEntry} from './Combat';
-import {rollPerception} from './mechanics';
+import {rollSneak} from './mechanics';
 import {
   ICharacter,
   DungeonModel,
@@ -190,12 +190,16 @@ async function processExplore(game: GameModel) {
     console.log();
     console.log(chalk.whiteBright('You have found a lair!'));
 
-    await processMonsterEncounter(game, level.spawnBoss(), false);
+    const monster = level.spawnBoss();
+
+    await processMonsterEncounter(game, monster, false);
 
     return;
   }
 
-  await processMonsterEncounter(game, level.spawnMonster(), rollPerception());
+  const monster = level.spawnMonster();
+
+  await processMonsterEncounter(game, monster, rollSneak(monster, game.player));
 }
 
 async function processMonsterEncounter(game: GameModel, monster: MonsterModel, monsterNoticedPlayer: boolean) {
